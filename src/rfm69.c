@@ -13,7 +13,6 @@
 /* spi.sck is portb5 */
 /* spi.mosi is portb3 */
 /* spi.miso is portb4 */
-/* dio0 to portd2 */
 
 #define RFM69_IO_CSN_DDR DDRB
 #define RFM69_IO_CSN_PORT PORTB
@@ -213,11 +212,12 @@ static void rfm69_setup(void)
   rfm69_csn_setup();
   rfm69_csn_high();
 
+  /* dclk signal */
+  RFM69_IO_DIO1_DDR |= RFM69_IO_DIO1_MASK;
+
+  /* data signal */
   RFM69_IO_DIO2_DDR &= ~RFM69_IO_DIO2_MASK;
   RFM69_IO_DIO2_PORT &= ~RFM69_IO_DIO2_MASK;
-
-  RFM69_IO_DIO4_DDR &= ~RFM69_IO_DIO4_MASK;
-  RFM69_IO_DIO4_PORT &= ~RFM69_IO_DIO4_MASK;
 
   /* put in standby mode */
   rfm69_write_op_mode(1 << 2);
@@ -238,7 +238,7 @@ static void rfm69_setup(void)
   /* TODO: should be in a calibration loop */
   rfm69_write_ook_peak(0);
  /* TODO: rfm69_write_ook_avg(); */
-  rfm69_write_ook_fix(0xf0 / 4);
+  rfm69_write_ook_fix(0xf0 / 5);
 
   /* set dio4 mapping as for rx ready */
   x = rfm69_read_dio_mapping_2();
@@ -252,8 +252,25 @@ static void rfm69_setup(void)
 
 static void rfm69_set_rx_continuous_mode(void)
 {
+  RFM69_IO_DIO2_DDR &= ~RFM69_IO_DIO2_MASK;
+  RFM69_IO_DIO2_PORT &= ~RFM69_IO_DIO2_MASK;
+
   rfm69_write_data_modul((3 << 5) | (1 << 3));
   rfm69_write_op_mode((1 << 7) | (4 << 2));
+
+  while (!(rfm69_read_irq_flags_1() & (1 << 7))) ;
+}
+
+static void rfm69_set_tx_continuous_mode(void)
+{
+  /* ook modulation, continuous tx */
+
+  RFM69_IO_DIO2_DDR |= RFM69_IO_DIO2_MASK;
+  RFM69_IO_DIO2_PORT &= ~RFM69_IO_DIO2_MASK;
+
+  rfm69_write_data_modul((3 << 5) | (1 << 3));
+  rfm69_write_op_mode((1 << 7) | (3 << 2));
+
   while (!(rfm69_read_irq_flags_1() & (1 << 7))) ;
 }
 
@@ -267,6 +284,34 @@ static inline uint8_t rfm69_get_data(void)
 {
   return RFM69_IO_DIO2_PIN & RFM69_IO_DIO2_MASK;
 }
- 
+
+static inline void rfm69_wait_t_data(void)
+{
+  /* t_data = 250ns = 4 insn at 16MHz */
+
+  __asm__ __volatile__ ("nop");
+  __asm__ __volatile__ ("nop");
+  __asm__ __volatile__ ("nop");
+  __asm__ __volatile__ ("nop");
+}
+
+static inline void rfm69_set_data_high(void)
+{
+  /* data is sampled on the rising edge of dclk/dio1 */
+
+  RFM69_IO_DIO1_PORT &= ~RFM69_IO_DIO1_MASK;
+  RFM69_IO_DIO2_PORT |= RFM69_IO_DIO2_MASK;
+  rfm69_wait_t_data();
+  RFM69_IO_DIO1_PORT |= RFM69_IO_DIO1_MASK;
+}
+
+static inline void rfm69_set_data_low(void)
+{
+  RFM69_IO_DIO1_PORT &= ~RFM69_IO_DIO1_MASK;
+  RFM69_IO_DIO2_PORT &= ~RFM69_IO_DIO2_MASK;
+  rfm69_wait_t_data();
+  RFM69_IO_DIO1_PORT |= RFM69_IO_DIO1_MASK;
+}
+
 
 #endif /* RFM69_C_INCLUDED */

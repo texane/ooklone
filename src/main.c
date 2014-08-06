@@ -21,6 +21,7 @@ __attribute__((unused)) static uint8_t get_rssi_avg(void)
 #define PULSE_MAX_COUNT 512
 static uint8_t pulse_timer[PULSE_MAX_COUNT];
 static volatile uint16_t pulse_index;
+static volatile uint16_t pulse_count;
 
 #define PULSE_FLAG_DONE (1 << 0)
 #define PULSE_FLAG_OVF (1 << 1)
@@ -28,14 +29,18 @@ static volatile uint8_t pulse_flags;
 
 ISR(PCINT2_vect)
 {
-  if (pulse_index == PULSE_MAX_COUNT)
+  /* capture counter */
+  uint16_t n = TCNT1;
+
+  if (pulse_count == PULSE_MAX_COUNT)
   {
     pulse_flags |= (PULSE_FLAG_OVF | PULSE_FLAG_DONE);
     return ;
   }
 
   /* store counter */
-  pulse_timer[pulse_index++] = TCNT1L;
+  if (n > 0xff) n = 0xff;
+  pulse_timer[pulse_count++] = (uint8_t)n;
 
   /* restart the timer, ctc mode, 16us resolution. */
   /* top value is 0x100 or 4.08 ms. */
@@ -62,7 +67,22 @@ ISR(TIMER1_COMPA_vect)
   timer1_common_vect();
 }
 
-static inline uint16_t pulse_timer_to_us(uint8_t x)
+ISR(TIMER1_COMPB_vect)
+{
+  if (pulse_index == pulse_count)
+  {
+    pulse_flags |= PULSE_FLAG_DONE;
+    return ;
+  }
+
+  /* play pulse_index and increment */
+  if ((pulse_index & 1)) rfm69_set_data_high();
+  else rfm69_set_data_low();
+  TCNT1 = 0;
+  OCR1B = pulse_timer[pulse_index++];
+}
+
+static uint16_t pulse_timer_to_us(uint8_t x)
 {
   return ((uint16_t)x) * 16;
 }
@@ -79,7 +99,7 @@ static void do_listen(void)
   TCNT1 = 0;
 
   /* reset pulse slicer context */
-  pulse_index = 0;
+  pulse_count = 0;
   pulse_flags = 0;
 
   /* put in rx continuous mode */
@@ -103,6 +123,7 @@ static void do_listen(void)
 
   /* disable dio2 pcint interrupt */
   RFM69_IO_DIO2_PCMSK &= ~RFM69_IO_DIO2_MASK;
+  PCICR &= ~RFM69_IO_DIO2_PCICR_MASK;
 
   /* put back in standby mode */
   rfm69_set_standby_mode();
@@ -116,7 +137,7 @@ static void do_print(void)
   uart_write(uint8_to_string(pulse_flags), 2);
   uart_write_rn();
 
-  for (i = 0; i != pulse_index; ++i)
+  for (i = 0; i != pulse_count; ++i)
   {
     const uint16_t us = pulse_timer_to_us(pulse_timer[i]);
 
@@ -133,11 +154,50 @@ static void do_print(void)
   uart_write_rn();
 }
 
+static void do_replay(void)
+{
+  /* replay the currently stored pulses */
+
+  pulse_flags = 0;
+  pulse_index = 1;
+
+  /* put in tx continuous mode */
+  rfm69_set_tx_continuous_mode();
+
+  uart_write((uint8_t*)"tx", 2);
+  uart_write_rn();
+
+  rfm69_set_data_low();
+
+  /* restart the timer, ctc mode, 16us resolution. */
+  /* ocr1b used for top, no max value */
+  /* top value is 0x100 or 4.08 ms. */
+  TCCR1A = 0;
+  TCNT1 = 0;
+  TCCR1C = 0;
+  OCR1B = 0xff;
+  TIMSK1 = 1 << 2;
+  TCCR1B = (1 << 3) | (4 << 0);
+
+  while ((pulse_flags & PULSE_FLAG_DONE) == 0)
+  {
+    /* TODO: sleep */
+  }
+
+  /* disable counter */
+  TCCR1B = 0;
+
+  /* put back in standby mode */
+  rfm69_set_standby_mode();
+}
+
 
 /* main */
 
 int main(void)
 {
+  uint8_t x;
+
   uart_setup();
   rfm69_setup();
 
@@ -145,8 +205,17 @@ int main(void)
 
   while (1)
   {
-    do_listen();
-    do_print();
+    uart_read_uint8(&x);
+
+    if (x == 'l')
+    {
+      do_listen();
+      do_print();
+    }
+    else
+    {
+      do_replay();
+    }
   }
 
   return 0;
