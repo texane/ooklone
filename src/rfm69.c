@@ -27,6 +27,8 @@
 #define RFM69_IO_DIO2_PIN PIND
 #define RFM69_IO_DIO2_PORT PORTD
 #define RFM69_IO_DIO2_MASK (1 << 3)
+#define RFM69_IO_DIO2_PCICR_MASK (1 << 2)
+#define RFM69_IO_DIO2_PCMSK PCMSK2
 
 #define RFM69_IO_DIO4_DDR DDRD
 #define RFM69_IO_DIO4_PIN PIND
@@ -252,6 +254,12 @@ static void rfm69_set_rx_continuous_mode(void)
 {
   rfm69_write_data_modul((3 << 5) | (1 << 3));
   rfm69_write_op_mode((1 << 7) | (4 << 2));
+  while (!(rfm69_read_irq_flags_1() & (1 << 7))) ;
+}
+
+static void rfm69_set_standby_mode(void)
+{
+  rfm69_write_op_mode((1 << 7) | (1 << 2));
   while (!(rfm69_read_irq_flags_1() & (1 << 7))) ;
 }
 
