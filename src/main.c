@@ -87,6 +87,11 @@ static uint16_t pulse_timer_to_us(uint8_t x)
   return ((uint16_t)x) * 16;
 }
 
+static uint8_t pulse_us_to_timer(uint16_t us)
+{
+  return (uint8_t)(us / 16);
+}
+
 static void uart_write_rn(void)
 {
   uart_write((uint8_t*)"\r\n", 2);
@@ -127,6 +132,72 @@ static void do_listen(void)
 
   /* put back in standby mode */
   rfm69_set_standby_mode();
+}
+
+static void do_fill(void)
+{
+  /* fill with a known pulse serie */
+
+  uint16_t i;
+
+#if 0
+  for (i = 0; i != 11; ++i)
+  {
+    pulse_timer[i] = pulse_us_to_timer(4 * i * 100);
+  }
+#else
+
+  pulse_timer[0] = 0;
+
+  i = 1;
+
+#define castoplug_send_pulse_a()		\
+do {						\
+  pulse_timer[i++] = pulse_us_to_timer(400);	\
+  pulse_timer[i++] = pulse_us_to_timer(940);	\
+} while (0)
+
+#define castoplug_send_pulse_b()		\
+do {						\
+  pulse_timer[i++] = pulse_us_to_timer(1005);	\
+  pulse_timer[i++] = pulse_us_to_timer(340);	\
+} while (0)
+
+  /* group a */
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+
+  /* dev 1 */
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+
+  /* cmd off */
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_b();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+  castoplug_send_pulse_a();
+
+#endif
+
+  pulse_count = i;
+  pulse_flags = 0;
 }
 
 static void do_print(void)
@@ -184,6 +255,8 @@ static void do_replay(void)
     /* TODO: sleep */
   }
 
+  rfm69_set_data_low();
+
   /* disable counter */
   TCCR1B = 0;
 
@@ -201,6 +274,9 @@ int main(void)
   uart_setup();
   rfm69_setup();
 
+  uart_write((uint8_t*)"go", 2);
+  uart_write_rn();
+
   sei();
 
   while (1)
@@ -212,9 +288,14 @@ int main(void)
       do_listen();
       do_print();
     }
-    else
+    else if (x == 'r')
     {
       do_replay();
+    }
+    else
+    {
+      do_fill();
+      do_print();
     }
   }
 

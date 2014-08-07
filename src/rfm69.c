@@ -235,11 +235,17 @@ static void rfm69_setup(void)
   /* fcar = fstep * frf */
   /* fstep = fxosc / (2^19) */
   /* fxosc = 32MHz */
+#if 0
+  /* true frequency */
   rfm69_write_frf((uint32_t)7109345.28);
+#else
+  /* shifted frequency as seen in rtlsdr */
+  rfm69_write_frf((uint32_t)7110515);
+#endif
 
   /* fixed ook threshold */
   /* TODO: should be in a calibration loop */
-  rfm69_write_ook_peak(0);
+  rfm69_write_ook_peak(1 << 6);
  /* TODO: rfm69_write_ook_avg(); */
   rfm69_write_ook_fix(0xf0 / 5);
 
