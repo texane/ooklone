@@ -228,7 +228,7 @@ static void rfm69_setup(void)
   /* bitrate */
   /* bitrate = fxosc / bitrate */
   /* fxosc = 32MHz */
-#define RFM69_BITRATE_KBPS 10.0
+#define RFM69_BITRATE_KBPS 100.0
   rfm69_write_bitrate((uint16_t)(32000.0 / RFM69_BITRATE_KBPS));
 
   /* 433.92 MHz carrier frequency */
@@ -243,11 +243,28 @@ static void rfm69_setup(void)
   rfm69_write_frf((uint32_t)7110515);
 #endif
 
-  /* fixed ook threshold */
-  /* TODO: should be in a calibration loop */
+  /* ook related values, cf. 3.4.12 */
+
+#if 1
+
+  /* peak mode: when no rssi, the acquired peak value is */
+  /* decremented by peak_thresh_step every  peak_thresh_dec */
+  /* period until it reaches peak the fixed_thresh value. */
+  /* note that the period depends on the bit rate. */
+
+  /* cf figure 12 for fixed_thresh optimzing algorithm */
+
   rfm69_write_ook_peak(1 << 6);
- /* TODO: rfm69_write_ook_avg(); */
-  rfm69_write_ook_fix(0xf0 / 5);
+  rfm69_write_ook_fix(50);
+
+#else
+
+  /* fixed threshold */
+
+  rfm69_write_ook_peak(0);
+  rfm69_write_ook_fix(90);
+
+#endif
 
   x = rfm69_read_lna();
   x = (x & ~7) | 2;

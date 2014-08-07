@@ -38,10 +38,6 @@ ISR(PCINT2_vect)
     return ;
   }
 
-  /* store counter */
-  if (n > 0xff) n = 0xff;
-  pulse_timer[pulse_count++] = (uint8_t)n;
-
   /* restart the timer, ctc mode, 16us resolution. */
   /* top value is 0x100 or 4.08 ms. */
   TCCR1A = 0;
@@ -50,6 +46,10 @@ ISR(PCINT2_vect)
   OCR1A = 0x100;
   TIMSK1 = (1 << 1) | (1 << 0);
   TCCR1B = (1 << 3) | (4 << 0);
+
+  /* store counter */
+  if (n > 0xff) n = 0xff;
+  pulse_timer[pulse_count++] = (uint8_t)n;
 }
 
 static inline void timer1_common_vect(void)
