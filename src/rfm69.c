@@ -22,6 +22,7 @@
 #define RFM69_IO_DIO0_PIN PIND
 #define RFM69_IO_DIO0_MASK (1 << 2)
 
+/* data */
 #define RFM69_IO_DIO2_DDR DDRD
 #define RFM69_IO_DIO2_PIN PIND
 #define RFM69_IO_DIO2_PORT PORTD
@@ -29,10 +30,11 @@
 #define RFM69_IO_DIO2_PCICR_MASK (1 << 2)
 #define RFM69_IO_DIO2_PCMSK PCMSK2
 
-#define RFM69_IO_DIO4_DDR DDRD
-#define RFM69_IO_DIO4_PIN PIND
-#define RFM69_IO_DIO4_PORT PORTD
-#define RFM69_IO_DIO4_MASK (1 << 4)
+/* dclk */
+#define RFM69_IO_DIO1_DDR DDRD
+#define RFM69_IO_DIO1_PIN PIND
+#define RFM69_IO_DIO1_PORT PORTD
+#define RFM69_IO_DIO1_MASK (1 << 4)
 
 static inline void rfm69_csn_setup(void)
 {
@@ -214,6 +216,7 @@ static void rfm69_setup(void)
 
   /* dclk signal */
   RFM69_IO_DIO1_DDR |= RFM69_IO_DIO1_MASK;
+  RFM69_IO_DIO1_PORT &= ~RFM69_IO_DIO1_MASK;
 
   /* data signal */
   RFM69_IO_DIO2_DDR &= ~RFM69_IO_DIO2_MASK;
@@ -239,11 +242,6 @@ static void rfm69_setup(void)
   rfm69_write_ook_peak(0);
  /* TODO: rfm69_write_ook_avg(); */
   rfm69_write_ook_fix(0xf0 / 5);
-
-  /* set dio4 mapping as for rx ready */
-  x = rfm69_read_dio_mapping_2();
-  x = (x & ~(3 << 6)) | (1 << 6);
-  rfm69_write_dio_mapping_2(x);
 
   x = rfm69_read_lna();
   x = (x & ~7) | 2;
@@ -303,6 +301,7 @@ static inline void rfm69_set_data_high(void)
   RFM69_IO_DIO2_PORT |= RFM69_IO_DIO2_MASK;
   rfm69_wait_t_data();
   RFM69_IO_DIO1_PORT |= RFM69_IO_DIO1_MASK;
+  /* assume at least t_data from here */
 }
 
 static inline void rfm69_set_data_low(void)
