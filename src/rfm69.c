@@ -129,6 +129,7 @@ static inline void rfm69_write_bitrate(uint16_t x)
 static inline void rfm69_write_frf(uint32_t x)
 {
   /* carrier frequency */
+  /* note: frf lsb must be written last (note p17) */
 
   rfm69_write_reg(0x07, (x >> 16) & 0xff);
   rfm69_write_reg(0x08, (x >> 8) & 0xff);
