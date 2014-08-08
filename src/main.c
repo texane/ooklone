@@ -18,7 +18,7 @@ __attribute__((unused)) static uint8_t get_rssi_avg(void)
 
 /* sniffer and pulse slicer logic */
 
-#define PULSE_MAX_COUNT 512
+#define PULSE_MAX_COUNT 256
 static uint8_t pulse_timer[PULSE_MAX_COUNT];
 static volatile uint16_t pulse_index;
 static volatile uint16_t pulse_count;
@@ -27,51 +27,62 @@ static volatile uint16_t pulse_count;
 #define PULSE_FLAG_OVF (1 << 1)
 static volatile uint8_t pulse_flags;
 
+static inline uint16_t pulse_timer_to_us(uint8_t x)
+{
+  return ((uint16_t)x) * 16;
+}
+
+#define pulse_us_to_timer(__us) (1 + (__us) / 16)
+
+/* max is 4000 with 8 bits and 16 us timer resolution */
+static const uint16_t pulse_max_timer = pulse_us_to_timer(3000);
+
+static inline void pulse_common_vect(uint8_t flags)
+{
+  TCCR1B = 0;
+  pulse_flags |= flags;
+}
+
+/* #define CONFIG_PCINT_ISR */
+#ifdef CONFIG_PCINT_ISR
 ISR(PCINT2_vect)
+#else
+static void pcint2_vect(void)
+#endif /* CONFIG_PCINT_ISR */
 {
   /* capture counter */
   uint16_t n = TCNT1;
 
   if (pulse_count == PULSE_MAX_COUNT)
   {
-    pulse_flags |= (PULSE_FLAG_OVF | PULSE_FLAG_DONE);
+    pulse_common_vect(PULSE_FLAG_OVF | PULSE_FLAG_DONE);
     return ;
   }
 
   /* restart the timer, ctc mode, 16us resolution. */
-  /* top value is 0x100 or 4.08 ms. */
-  TCCR1A = 0;
   TCNT1 = 0;
-  TCCR1C = 0;
-  OCR1A = 0x100;
-  TIMSK1 = (1 << 1) | (1 << 0);
   TCCR1B = (1 << 3) | (4 << 0);
 
   /* store counter */
-  if (n > 0xff) n = 0xff;
+  if (n > pulse_max_timer) n = pulse_max_timer;
   pulse_timer[pulse_count++] = (uint8_t)n;
-}
-
-static inline void timer1_common_vect(void)
-{
-  pulse_flags |= PULSE_FLAG_DONE;
 }
 
 ISR(TIMER1_OVF_vect)
 {
-  timer1_common_vect();
+  pulse_common_vect(PULSE_FLAG_DONE);
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-  timer1_common_vect();
+  pulse_common_vect(PULSE_FLAG_DONE);
 }
 
 ISR(TIMER1_COMPB_vect)
 {
   if (pulse_index == pulse_count)
   {
-    pulse_flags |= PULSE_FLAG_DONE;
+    pulse_common_vect(PULSE_FLAG_DONE);
     return ;
   }
 
@@ -82,26 +93,31 @@ ISR(TIMER1_COMPB_vect)
   OCR1B = pulse_timer[pulse_index++];
 }
 
-static uint16_t pulse_timer_to_us(uint8_t x)
-{
-  return ((uint16_t)x) * 16;
-}
-
-static uint8_t pulse_us_to_timer(uint16_t us)
-{
-  return (uint8_t)(us / 16);
-}
-
 static void uart_write_rn(void)
 {
   uart_write((uint8_t*)"\r\n", 2);
 }
 
+static uint8_t get_data(void)
+{
+  uint8_t i;
+  uint8_t x = rfm69_get_data();
+  for (i = 0; i != 8; ++i) x |= rfm69_get_data();
+  return x;
+}
+
 static void do_listen(void)
 {
-  /* reset timer for first read in pcint isr */
+  uint8_t pre_state;
+  uint8_t cur_state;
+
+  /* prepare the timer. first read in pcint isr. */
   TCCR1B = 0;
   TCNT1 = 0;
+  TCCR1A = 0;
+  TCCR1C = 0;
+  OCR1A = pulse_max_timer;
+  TIMSK1 = (1 << 1) | (1 << 0);
 
   /* reset pulse slicer context */
   pulse_count = 0;
@@ -114,21 +130,45 @@ static void do_listen(void)
   uart_write_rn();
 
   /* setup dio2 so the first bit start the timer */
+#ifdef CONFIG_PCINT_ISR
   PCICR |= RFM69_IO_DIO2_PCICR_MASK;
   RFM69_IO_DIO2_PCMSK |= RFM69_IO_DIO2_MASK;
+#endif /* CONFIG_PCINT_ISR */
+
+  pre_state = 0;
 
   /* wait until done */
   while ((pulse_flags & PULSE_FLAG_DONE) == 0)
   {
+#ifdef CONFIG_PCINT_ISR
+
     /* TODO: sleep */
+
+#else
+
+#if 0
+    cur_state = rfm69_get_data();
+#else
+    cur_state = get_data();
+#endif
+
+    if (cur_state == pre_state) continue ;
+
+    pre_state = cur_state;
+
+    pcint2_vect();
+
+#endif /* CONFIG_PCINT_ISR */
   }
 
   /* stop timer */
   TCCR1B = 0;
 
+#ifdef CONFIG_PCINT_ISR
   /* disable dio2 pcint interrupt */
   RFM69_IO_DIO2_PCMSK &= ~RFM69_IO_DIO2_MASK;
   PCICR &= ~RFM69_IO_DIO2_PCICR_MASK;
+#endif /* CONFIG_PCINT_ISR */
 
   /* put back in standby mode */
   rfm69_set_standby_mode();
@@ -248,7 +288,7 @@ static void do_replay(void)
   TCCR1C = 0;
   OCR1B = 0xff;
   TIMSK1 = 1 << 2;
-  TCCR1B = (1 << 3) | (4 << 0);
+  TCCR1B = 4 << 0;
 
   while ((pulse_flags & PULSE_FLAG_DONE) == 0)
   {

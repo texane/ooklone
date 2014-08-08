@@ -154,6 +154,11 @@ static inline uint8_t rfm69_read_lna(void)
   return rfm69_read_reg(0x18);
 }
 
+static inline void rfm69_write_rx_bw(uint8_t x)
+{
+  rfm69_write_reg(0x19, x);
+}
+
 static inline void rfm69_write_ook_peak(uint8_t x)
 {
   rfm69_write_reg(0x1b, x);
@@ -226,9 +231,10 @@ static void rfm69_setup(void)
   rfm69_write_op_mode(1 << 2);
 
   /* bitrate */
+  /* maximum ook bitrate is 32 Kbps */
   /* bitrate = fxosc / bitrate */
   /* fxosc = 32MHz */
-#define RFM69_BITRATE_KBPS 100.0
+#define RFM69_BITRATE_KBPS 50.0
   rfm69_write_bitrate((uint16_t)(32000.0 / RFM69_BITRATE_KBPS));
 
   /* 433.92 MHz carrier frequency */
@@ -245,29 +251,31 @@ static void rfm69_setup(void)
 
   /* ook related values, cf. 3.4.12 */
 
-#if 1
+#if 0
 
-  /* peak mode: when no rssi, the acquired peak value is */
-  /* decremented by peak_thresh_step every  peak_thresh_dec */
-  /* period until it reaches peak the fixed_thresh value. */
+  /* peak mode: a one is detected when the rssi reaches */
+  /* peak_thresh - 6db. the peak_thresh value is updated with */
+  /* the maximum rssi value seen so far. when a zero is */
+  /* detected, peak_thresh is decremented by peak_thresh_step */
+  /* every peak_thresh_dec period until it reaches */
+  /* fixed_thresh. */
   /* note that the period depends on the bit rate. */
-
   /* cf figure 12 for fixed_thresh optimzing algorithm */
 
   rfm69_write_ook_peak(1 << 6);
-  rfm69_write_ook_fix(50);
+  rfm69_write_ook_fix(55);
 
 #else
 
   /* fixed threshold */
 
-  rfm69_write_ook_peak(0);
-  rfm69_write_ook_fix(90);
+  rfm69_write_ook_peak(0 << 6);
+  rfm69_write_ook_fix(80);
 
 #endif
 
   x = rfm69_read_lna();
-  x = (x & ~7) | 2;
+  x = (1 << 7) | (1 << 0);
   rfm69_write_lna(x);
 }
 
