@@ -212,6 +212,11 @@ static inline uint8_t rfm69_read_irq_flags_1(void)
   return rfm69_read_reg(0x27);
 }
 
+static inline void rfm69_write_rssi_threshold(uint8_t x)
+{
+  rfm69_write_reg(0x29, x);
+}
+
 static void rfm69_setup(void)
 {
   uint8_t x;
@@ -235,7 +240,7 @@ static void rfm69_setup(void)
   /* maximum ook bitrate is 32 Kbps */
   /* bitrate = fxosc / bitrate */
   /* fxosc = 32MHz */
-#define RFM69_BITRATE_KBPS 50.0
+#define RFM69_BITRATE_KBPS 32.0
   rfm69_write_bitrate((uint16_t)(32000.0 / RFM69_BITRATE_KBPS));
 
   /* 433.92 MHz carrier frequency */
@@ -252,7 +257,7 @@ static void rfm69_setup(void)
 
   /* ook related values, cf. 3.4.12 */
 
-#if 0
+#if 1
 
   /* peak mode: a one is detected when the rssi reaches */
   /* peak_thresh - 6db. the peak_thresh value is updated with */
@@ -264,20 +269,27 @@ static void rfm69_setup(void)
   /* cf figure 12 for fixed_thresh optimzing algorithm */
 
   rfm69_write_ook_peak(1 << 6);
-  rfm69_write_ook_fix(55);
+  rfm69_write_ook_fix(70);
 
 #else
 
   /* fixed threshold */
 
   rfm69_write_ook_peak(0 << 6);
-  rfm69_write_ook_fix(80);
+  rfm69_write_ook_fix(70);
 
 #endif
 
   x = rfm69_read_lna();
   x = (1 << 7) | (1 << 0);
   rfm69_write_lna(x);
+
+  /* bits<7:5>: dcc freq */
+  /* bits<4:3>: rx bw mant */
+  /* bits<2:0>: rx bw exp */
+  rfm69_write_rx_bw((2 << 5) | (1 << 3) | (1 << 0));
+
+  rfm69_write_rssi_threshold(35);
 }
 
 static void rfm69_set_rx_continuous_mode(void)

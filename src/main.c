@@ -35,7 +35,7 @@ static inline uint16_t pulse_timer_to_us(uint8_t x)
 #define pulse_us_to_timer(__us) (1 + (__us) / 16)
 
 /* max is 4000 with 8 bits and 16 us timer resolution */
-static const uint16_t pulse_max_timer = pulse_us_to_timer(3000);
+static const uint16_t pulse_max_timer = pulse_us_to_timer(2000);
 
 static inline void pulse_common_vect(uint8_t flags)
 {
@@ -98,11 +98,14 @@ static void uart_write_rn(void)
   uart_write((uint8_t*)"\r\n", 2);
 }
 
-static uint8_t get_data(void)
+static inline uint8_t filter_data(void)
 {
+  /* glitch filtering: consider a one only if no */
+  /* zero appears within a given pulse count */
+
   uint8_t i;
   uint8_t x = rfm69_get_data();
-  for (i = 0; i != 8; ++i) x |= rfm69_get_data();
+  for (i = 0; i != 32; ++i) x &= rfm69_get_data();
   return x;
 }
 
@@ -146,11 +149,7 @@ static void do_listen(void)
 
 #else
 
-#if 0
-    cur_state = rfm69_get_data();
-#else
-    cur_state = get_data();
-#endif
+    cur_state = filter_data();
 
     if (cur_state == pre_state) continue ;
 
