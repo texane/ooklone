@@ -1,2 +1,6 @@
 http://lowpowerlab.com/moteino/
 https://github.com/LowPowerLab/Moteino.git
+
+rx bandwidth must set wide enough
+maximum pulse delay should be set to a maxmimum value
+frame replay should be done slow enough (issue with blyss plugs)

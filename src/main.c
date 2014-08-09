@@ -18,7 +18,7 @@ __attribute__((unused)) static uint8_t get_rssi_avg(void)
 
 /* sniffer and pulse slicer logic */
 
-#define PULSE_MAX_COUNT 256
+#define PULSE_MAX_COUNT 1024
 static uint8_t pulse_timer[PULSE_MAX_COUNT];
 static volatile uint16_t pulse_index;
 static volatile uint16_t pulse_count;
@@ -27,15 +27,22 @@ static volatile uint16_t pulse_count;
 #define PULSE_FLAG_OVF (1 << 1)
 static volatile uint8_t pulse_flags;
 
+/* pulse timer resolution is 4 or 16 us */
+/* note that the counters are stored using 8 bits */
+/* values, which equals 1024 or 4096 us and should */
+/* be considered when setting pulse_max_timer. */
+#define PULSE_TIMER_RES_US 16
+
+#define pulse_us_to_timer(__us) (1 + (__us) / PULSE_TIMER_RES_US)
+
 static inline uint16_t pulse_timer_to_us(uint8_t x)
 {
-  return ((uint16_t)x) * 16;
+  return ((uint16_t)x) * PULSE_TIMER_RES_US;
 }
 
-#define pulse_us_to_timer(__us) (1 + (__us) / 16)
-
-/* max is 4000 with 8 bits and 16 us timer resolution */
-static const uint16_t pulse_max_timer = pulse_us_to_timer(2000);
+/* max is 1024 us with 8 bits counter and 4 us resolution */
+/* max is 4096 us with 8 bits counter and 16 us resolution */
+static const uint16_t pulse_max_timer = pulse_us_to_timer(3000);
 
 static inline void pulse_common_vect(uint8_t flags)
 {
@@ -59,9 +66,13 @@ static void pcint2_vect(void)
     return ;
   }
 
-  /* restart the timer, ctc mode, 16us resolution. */
+  /* restart the timer, ctc mode. */
   TCNT1 = 0;
+#if (PULSE_TIMER_RES_US == 4)
+  TCCR1B = (1 << 3) | (3 << 0);
+#elif (PULSE_TIMER_RES_US == 16)
   TCCR1B = (1 << 3) | (4 << 0);
+#endif
 
   /* store counter */
   if (n > pulse_max_timer) n = pulse_max_timer;
@@ -287,7 +298,11 @@ static void do_replay(void)
   TCCR1C = 0;
   OCR1B = 0xff;
   TIMSK1 = 1 << 2;
+#if (PULSE_TIMER_RES_US == 4)
+  TCCR1B = 3 << 0;
+#elif (PULSE_TIMER_RES_US == 16)
   TCCR1B = 4 << 0;
+#endif
 
   while ((pulse_flags & PULSE_FLAG_DONE) == 0)
   {
