@@ -3,7 +3,11 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include "./rfm69.c"
+
+/* #define CONFIG_UART */
+#ifdef CONFIG_UART
 #include "./uart.c"
+#endif /* CONFIG_UART */
 
 
 __attribute__((unused)) static uint8_t get_rssi_avg(void)
@@ -104,10 +108,12 @@ ISR(TIMER1_COMPB_vect)
   OCR1B = pulse_timer[pulse_index++];
 }
 
+#ifdef CONFIG_UART
 static void uart_write_rn(void)
 {
   uart_write((uint8_t*)"\r\n", 2);
 }
+#endif /* CONFIG_UART */
 
 static inline uint8_t filter_data(void)
 {
@@ -140,8 +146,10 @@ static void do_listen(void)
   /* put in rx continuous mode */
   rfm69_set_rx_continuous_mode();
 
+#ifdef CONFIG_UART
   uart_write((uint8_t*)"rx", 2);
   uart_write_rn();
+#endif /* CONFIG_UART */
 
   /* setup dio2 so the first bit start the timer */
 #ifdef CONFIG_PCINT_ISR
@@ -250,6 +258,7 @@ do {						\
   pulse_flags = 0;
 }
 
+#ifdef CONFIG_UART
 static void do_print(void)
 {
   uint16_t i;
@@ -274,6 +283,7 @@ static void do_print(void)
 
   uart_write_rn();
 }
+#endif /* CONFIG_UART */
 
 static void do_replay(void)
 {
@@ -285,8 +295,10 @@ static void do_replay(void)
   /* put in tx continuous mode */
   rfm69_set_tx_continuous_mode();
 
+#ifdef CONFIG_UART
   uart_write((uint8_t*)"tx", 2);
   uart_write_rn();
+#endif /* CONFIG_UART */
 
   rfm69_set_data_low();
 
@@ -325,16 +337,22 @@ int main(void)
 {
   uint8_t x;
 
+#ifdef CONFIG_UART
   uart_setup();
+#endif /* CONFIG_UART */
+
   rfm69_setup();
 
+#ifdef CONFIG_UART
   uart_write((uint8_t*)"go", 2);
   uart_write_rn();
+#endif /* CONFIG_UART */
 
   sei();
 
   while (1)
   {
+#ifdef CONFIG_UART
     uart_read_uint8(&x);
 
     if (x == 'l')
@@ -351,6 +369,27 @@ int main(void)
       do_fill();
       do_print();
     }
+#else
+    do_listen();
+
+    while (1)
+    {
+      for (x = 0; x != 7; ++x)
+      {
+	_delay_ms(1);
+	do_replay();
+      }
+
+      for (x = 0; x != 5; ++x)
+      {
+	_delay_ms(200);
+	_delay_ms(200);
+	_delay_ms(200);
+	_delay_ms(200);
+	_delay_ms(200);
+      }
+    }
+#endif /* CONFIG_UART */
   }
 
   return 0;
