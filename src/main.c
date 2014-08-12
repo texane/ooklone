@@ -147,11 +147,6 @@ static void do_listen(void)
   /* put in rx continuous mode */
   rfm69_set_rx_continuous_mode();
 
-#ifdef CONFIG_UART
-  uart_write((uint8_t*)"rx", 2);
-  uart_write_rn();
-#endif /* CONFIG_UART */
-
   /* setup dio2 so the first bit start the timer */
 #ifdef CONFIG_PCINT_ISR
   PCICR |= RFM69_IO_DIO2_PCICR_MASK;
@@ -260,45 +255,6 @@ static void do_replay(void)
   rfm69_set_standby_mode();
 }
 
-#if 0 /* TODO */
-
-static uint8_t do_wait(void)
-{
-  /* wait until an event occurs (sleep, button ...) */
-  /* return the wait mask, an or of WAIT_FLAG_XXX */
-#define WAIT_FLAG_TIMER (1 << 0)
-
-  uint8_t mask;
-
-  /* sleep mode */
-  set_sleep_mode(SLEEP_MODE_IDLE);
-
-  cli();
-
-  /* capture with interrupt disabled */
-  mask = wait_mask;
-  wait_mask = 0;
-
-  if (mask == 0)
-  {
-    sleep_enable();
-    sei();
-    sleep_cpu();
-    sleep_bod_disable();
-  }
-
-  sei();
-
-  return mask;
-}
-
-static void do_sleep(uint16_t ms)
-{
-  /* configure timer0 and wait for */
-}
-
-#endif /* TODO */
-
 
 /* buttons */
 
@@ -308,28 +264,77 @@ static void do_sleep(uint16_t ms)
 #define BUT_PLAY_MASK (1 << 0)
 #define BUT_RECORD_MASK (1 << 1)
 #define BUT_ALL_MASK (BUT_RECORD_MASK | BUT_PLAY_MASK)
+#define BUT_COMMON_PCICR_MASK (1 << 1)
+#define BUT_COMMON_PCMSK PCMSK1
+
+static volatile uint8_t but_pcint_pin;
+
+ISR(PCINT1_vect)
+{
+  /* capture pin values */
+  but_pcint_pin = BUT_COMMON_PIN;
+}
 
 static void but_setup(void)
 {
   /* set as input, enable pullups */
   BUT_COMMON_DDR &= ~BUT_ALL_MASK;
   BUT_COMMON_PORT |= BUT_ALL_MASK;
+
+  but_pcint_pin = BUT_ALL_MASK;
 }
 
 static uint8_t but_wait(void)
 {
-  uint8_t x;
+  uint8_t x = BUT_ALL_MASK;
 
-  _delay_ms(200);
+  /* sleep mode */
+  set_sleep_mode(SLEEP_MODE_IDLE);
 
-  while (1)
+  /* enable pin change interrupt */
+  PCICR |= BUT_COMMON_PCICR_MASK;
+  BUT_COMMON_PCMSK |= BUT_ALL_MASK;
+
+  while (x == BUT_ALL_MASK)
   {
-    /* inverted logic because of pullups */
-    x = (BUT_COMMON_PIN & BUT_ALL_MASK) ^ BUT_ALL_MASK;
-    if (x) return x;
+    /* capture and reset but_pcint_pin with interrupts disabled */
+    /* if no pin set, then sleep until pcint */
+    /* take care of the inverted logic due to pullups */
+
+    cli();
+
+    if ((but_pcint_pin & BUT_ALL_MASK) == BUT_ALL_MASK)
+    {
+      sleep_enable();
+      sei();
+      sleep_cpu();
+      sleep_bod_disable();
+    }
+
+    x = but_pcint_pin;
+    but_pcint_pin = BUT_ALL_MASK;
+
+    /* simple debouncing logic. 1 wins over 0. */
+    x |= BUT_COMMON_PIN;
+    _delay_us(1);
+    x |= BUT_COMMON_PIN;
+    _delay_us(1);
+    x |= BUT_COMMON_PIN;
+    _delay_us(1);
+    x |= BUT_COMMON_PIN;
+
+    sei();
+
+    /* conserve only pins of interest */
+    x &= BUT_ALL_MASK;
   }
 
-  return 0;
+  /* disable pin change interrupt */
+  BUT_COMMON_PCMSK &= ~BUT_ALL_MASK;
+  PCICR &= ~BUT_COMMON_PCICR_MASK;
+
+  /* inverted logic because of pullups */
+  return x ^ BUT_ALL_MASK;
 }
 
 
@@ -347,11 +352,6 @@ int main(void)
   rfm69_setup();
 
   but_setup();
-
-#ifdef CONFIG_UART
-  uart_write((uint8_t*)"go", 2);
-  uart_write_rn();
-#endif /* CONFIG_UART */
 
   sei();
 
