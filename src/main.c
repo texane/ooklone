@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 #include <util/delay.h>
 #include "./rfm69.c"
 
@@ -295,11 +296,6 @@ static void do_replay(void)
   /* put in tx continuous mode */
   rfm69_set_tx_continuous_mode();
 
-#ifdef CONFIG_UART
-  uart_write((uint8_t*)"tx", 2);
-  uart_write_rn();
-#endif /* CONFIG_UART */
-
   rfm69_set_data_low();
 
   /* restart the timer, ctc mode, 16us resolution. */
@@ -329,6 +325,45 @@ static void do_replay(void)
   /* put back in standby mode */
   rfm69_set_standby_mode();
 }
+
+#if 0 /* TODO */
+
+static uint8_t do_wait(void)
+{
+  /* wait until an event occurs (sleep, button ...) */
+  /* return the wait mask, an or of WAIT_FLAG_XXX */
+#define WAIT_FLAG_TIMER (1 << 0)
+
+  uint8_t mask;
+
+  /* sleep mode */
+  set_sleep_mode(SLEEP_MODE_IDLE);
+
+  cli();
+
+  /* capture with interrupt disabled */
+  mask = wait_mask;
+  wait_mask = 0;
+
+  if (mask == 0)
+  {
+    sleep_enable();
+    sei();
+    sleep_cpu();
+    sleep_bod_disable();
+  }
+
+  sei();
+
+  return mask;
+}
+
+static void do_sleep(uint16_t ms)
+{
+  /* configure timer0 and wait for */
+}
+
+#endif /* TODO */
 
 
 /* main */
@@ -362,7 +397,11 @@ int main(void)
     }
     else if (x == 'r')
     {
-      do_replay();
+      for (x = 0; x != 7; ++x)
+      {
+	_delay_us(500);
+	do_replay();
+      }
     }
     else
     {
@@ -376,7 +415,7 @@ int main(void)
     {
       for (x = 0; x != 7; ++x)
       {
-	_delay_ms(1);
+	_delay_us(500);
 	do_replay();
       }
 

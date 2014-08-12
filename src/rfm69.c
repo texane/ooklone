@@ -145,6 +145,11 @@ static inline void rfm69_read_frf(uint32_t* x)
   *x |= ((uint32_t)rfm69_read_reg(0x09)) << 0;
 }
 
+static inline void rfm69_write_pa_level(uint8_t x)
+{
+  rfm69_write_reg(0x11, x);
+}
+
 static inline void rfm69_write_lna(uint8_t x)
 {
   rfm69_write_reg(0x18, x);
@@ -279,6 +284,8 @@ static void rfm69_setup(void)
   rfm69_write_ook_fix(70);
 
 #endif
+
+  rfm69_write_pa_level((1 << 7) | (0x10));
 
   x = rfm69_read_lna();
   x = (1 << 7) | (1 << 0);
