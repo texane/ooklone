@@ -5,7 +5,7 @@
 #include <util/delay.h>
 #include "./rfm69.c"
 
-/* #define CONFIG_UART */
+#define CONFIG_UART
 #ifdef CONFIG_UART
 #include "./uart.c"
 #endif /* CONFIG_UART */
@@ -193,72 +193,6 @@ static void do_listen(void)
   rfm69_set_standby_mode();
 }
 
-static void do_fill(void)
-{
-  /* fill with a known pulse serie */
-
-  uint16_t i;
-
-#if 0
-  for (i = 0; i != 11; ++i)
-  {
-    pulse_timer[i] = pulse_us_to_timer(4 * i * 100);
-  }
-#else
-
-  pulse_timer[0] = 0;
-
-  i = 1;
-
-#define castoplug_send_pulse_a()		\
-do {						\
-  pulse_timer[i++] = pulse_us_to_timer(400);	\
-  pulse_timer[i++] = pulse_us_to_timer(940);	\
-} while (0)
-
-#define castoplug_send_pulse_b()		\
-do {						\
-  pulse_timer[i++] = pulse_us_to_timer(1005);	\
-  pulse_timer[i++] = pulse_us_to_timer(340);	\
-} while (0)
-
-  /* group a */
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-
-  /* dev 1 */
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-
-  /* cmd off */
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_b();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-  castoplug_send_pulse_a();
-
-#endif
-
-  pulse_count = i;
-  pulse_flags = 0;
-}
-
 #ifdef CONFIG_UART
 static void do_print(void)
 {
@@ -366,17 +300,53 @@ static void do_sleep(uint16_t ms)
 #endif /* TODO */
 
 
+/* buttons */
+
+#define BUT_COMMON_DDR DDRC
+#define BUT_COMMON_PORT PORTC
+#define BUT_COMMON_PIN PINC
+#define BUT_PLAY_MASK (1 << 0)
+#define BUT_RECORD_MASK (1 << 1)
+#define BUT_ALL_MASK (BUT_RECORD_MASK | BUT_PLAY_MASK)
+
+static void but_setup(void)
+{
+  /* set as input, enable pullups */
+  BUT_COMMON_DDR &= ~BUT_ALL_MASK;
+  BUT_COMMON_PORT |= BUT_ALL_MASK;
+}
+
+static uint8_t but_wait(void)
+{
+  uint8_t x;
+
+  _delay_ms(200);
+
+  while (1)
+  {
+    /* inverted logic because of pullups */
+    x = (BUT_COMMON_PIN & BUT_ALL_MASK) ^ BUT_ALL_MASK;
+    if (x) return x;
+  }
+
+  return 0;
+}
+
+
 /* main */
 
 int main(void)
 {
   uint8_t x;
+  uint8_t i;
 
 #ifdef CONFIG_UART
   uart_setup();
 #endif /* CONFIG_UART */
 
   rfm69_setup();
+
+  but_setup();
 
 #ifdef CONFIG_UART
   uart_write((uint8_t*)"go", 2);
@@ -387,48 +357,35 @@ int main(void)
 
   while (1)
   {
+    x = but_wait();
+
+    if (x & BUT_RECORD_MASK)
+    {
 #ifdef CONFIG_UART
-    uart_read_uint8(&x);
-
-    if (x == 'l')
-    {
-      do_listen();
-      do_print();
-    }
-    else if (x == 'r')
-    {
-      for (x = 0; x != 7; ++x)
-      {
-	_delay_us(500);
-	do_replay();
-      }
-    }
-    else
-    {
-      do_fill();
-      do_print();
-    }
-#else
-    do_listen();
-
-    while (1)
-    {
-      for (x = 0; x != 7; ++x)
-      {
-	_delay_us(500);
-	do_replay();
-      }
-
-      for (x = 0; x != 5; ++x)
-      {
-	_delay_ms(200);
-	_delay_ms(200);
-	_delay_ms(200);
-	_delay_ms(200);
-	_delay_ms(200);
-      }
-    }
+      uart_write((uint8_t*)"record", 6);
+      uart_write_rn();
 #endif /* CONFIG_UART */
+
+      do_listen();
+
+#ifdef CONFIG_UART
+      do_print();
+#endif /* CONFIG_UART */
+    }
+
+    if (x & BUT_PLAY_MASK)
+    {
+#ifdef CONFIG_UART
+      uart_write((uint8_t*)"play", 4);
+      uart_write_rn();
+#endif /* CONFIG_UART */
+
+      for (i = 0; i != 7; ++i)
+      {
+	_delay_us(500);
+	do_replay();
+      }
+    }
   }
 
   return 0;
