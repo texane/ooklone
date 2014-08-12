@@ -297,7 +297,7 @@ static uint8_t but_wait(void)
 
   while (x == BUT_ALL_MASK)
   {
-    /* capture and reset but_pcint_pin with interrupts disabled */
+    /* capture but_pcint_pin with interrupts disabled */
     /* if no pin set, then sleep until pcint */
     /* take care of the inverted logic due to pullups */
 
@@ -312,7 +312,8 @@ static uint8_t but_wait(void)
     }
 
     x = but_pcint_pin;
-    but_pcint_pin = BUT_ALL_MASK;
+
+    sei();
 
     /* simple debouncing logic. 1 wins over 0. */
     x |= BUT_COMMON_PIN;
@@ -322,8 +323,6 @@ static uint8_t but_wait(void)
     x |= BUT_COMMON_PIN;
     _delay_us(1);
     x |= BUT_COMMON_PIN;
-
-    sei();
 
     /* conserve only pins of interest */
     x &= BUT_ALL_MASK;
