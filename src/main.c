@@ -165,11 +165,8 @@ static void do_listen(void)
 #else
 
     cur_state = filter_data();
-
     if (cur_state == pre_state) continue ;
-
     pre_state = cur_state;
-
     pcint2_vect();
 
 #endif /* CONFIG_PCINT_ISR */
