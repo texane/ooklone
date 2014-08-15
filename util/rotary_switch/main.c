@@ -9,7 +9,7 @@ static inline unsigned int pow2(unsigned int x)
 
 int main(int ac, char** av)
 {
-#define N_SWITCH 12 /* switch position count */
+#define N_SWITCH 7 /* switch position count */
 #define N_ADC 10 /* adc bits count */
 #define V_REF 3.3
 
@@ -27,14 +27,15 @@ int main(int ac, char** av)
     ri[i] = (adc_hi * rdiv_2) / (adc_step * (double)i) - rdiv_2;
   }
 
-  /* fix ri[0] to ri[1] * 10 */
-  ri[0] = ri[1] * 10.0;
+  /* fix ri[0] to ri[1] * 20 */
+  ri[0] = ri[1] * 20.0;
 
   /* print values */
   for (i = 0; i != N_SWITCH; ++i)
   {
     const double vi = V_REF * rdiv_2 / (ri[i] + rdiv_2);
-    printf("i = %02zu r = % 9.01lf, v = % 1.01lf\n", i, ri[i], vi);
+    const unsigned int adc = vi * adc_hi / V_REF;
+    printf("i = %02zu, r = % 9.01lf, adc = 0x%08x, v = % 1.01lf\n", i, ri[i], adc, vi);
   }
 
   return 0;

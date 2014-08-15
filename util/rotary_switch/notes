@@ -1,19 +1,18 @@
-we have a rotary switch of n_switch = 12 positions.
-we measure the switch position using an adc. we want
-switch positions to result in an adc values that are
-as widely spaced as possible from one another, esp.
-with low resolution adc. lets do the maths.
+we have a rotary switch of n_switch positions. we measure
+the switch position using an adc. we want switch positions
+to result in an adc values that are as widely spaced as
+possible from one another, esp. with low resolution adc.
+lets do the maths.
 
-if the adc has n_adc bits and the switch has n_switch
-positions, we have an adc_step value of:
-adc_step = n_adc / n_switch
-also:
-adc_hi = pow2(n_adc)
+if the adc has n_adc bits, or adc_hi = pow2(n_adc) and
+the switch has n_switch positions, we have an adc_step
+value of:
+adc_step = adc_hi / n_switch
 
-if v_ref is the adc reference voltage and adc_i is
+if v_ref is the adc reference voltage and v_i is
 the value in volts measured by the adc at switch
 position i, we have the following relation:
-adc_i = v_ref / adc_hi * (adc_step * i) (eq_0)
+v_i = v_ref / adc_hi * (adc_step * i) (eq_0)
 
 also, we have from the resistor divider network eq:
 v_out = v_ref * rdiv_2 / (rdiv_1 + rdiv_2)
@@ -22,8 +21,7 @@ compute for every switch position. Lets call it r_i,
 we have:
 v_i = v_ref * rdiv_2 / (r_i + rdiv_2) (eq_1)
 
-in eq_0 and eq_1, adc_i and v_i are the same.
-thus, by equating eq_0 and eq_1:
+by equating eq_0 and eq_1:
 v_ref / adc_hi * (adc_step * i) = v_ref * rdiv_2 / (r_i + rdiv_2)
 (adc_step * i) / adc_hi = rdiv_2 / (r_i + rdiv_2)
 (adc_step * i) / (adc_hi * rdiv_2) = 1 / (r_i + rdiv_2)
@@ -36,18 +34,14 @@ It is useful if like me you are peeking resistors from a set
 already available.
 
 Also, r_0 cannot be computed (division by zero). We should
-chose it so that it is big enough, le say 10 * r_2. in our
-case, it results in the following values:
+chose it so that it is big enough, le say 20 * r_2. in our
+case, with a switch of 7 position and a voltage reference
+of 3.3V, we have the following values:
 
-i = 00 r =  110000.0, v =  0.0
-i = 01 r =   11000.0, v =  0.3
-i = 02 r =    5000.0, v =  0.6
-i = 03 r =    3000.0, v =  0.8
-i = 04 r =    2000.0, v =  1.1
-i = 05 r =    1400.0, v =  1.4
-i = 06 r =    1000.0, v =  1.6
-i = 07 r =     714.3, v =  1.9
-i = 08 r =     500.0, v =  2.2
-i = 09 r =     333.3, v =  2.5
-i = 10 r =     200.0, v =  2.8
-i = 11 r =      90.9, v =  3.0
+i = 00, r =  120000.0, adc = 0x00000008, v =  0.0
+i = 01, r =    6000.0, adc = 0x00000092, v =  0.5
+i = 02, r =    2500.0, adc = 0x00000124, v =  0.9
+i = 03, r =    1333.3, adc = 0x000001b6, v =  1.4
+i = 04, r =     750.0, adc = 0x00000249, v =  1.9
+i = 05, r =     400.0, adc = 0x000002db, v =  2.4
+i = 06, r =     166.7, adc = 0x0000036d, v =  2.8
