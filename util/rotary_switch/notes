@@ -39,3 +39,15 @@ Also, r_0 cannot be computed (division by zero). We should
 chose it so that it is big enough, le say 10 * r_2. in our
 case, it results in the following values:
 
+i = 00 r =  110000.0, v =  0.0
+i = 01 r =   11000.0, v =  0.3
+i = 02 r =    5000.0, v =  0.6
+i = 03 r =    3000.0, v =  0.8
+i = 04 r =    2000.0, v =  1.1
+i = 05 r =    1400.0, v =  1.4
+i = 06 r =    1000.0, v =  1.6
+i = 07 r =     714.3, v =  1.9
+i = 08 r =     500.0, v =  2.2
+i = 09 r =     333.3, v =  2.5
+i = 10 r =     200.0, v =  2.8
+i = 11 r =      90.9, v =  3.0

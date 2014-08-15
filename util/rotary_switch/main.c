@@ -34,7 +34,7 @@ int main(int ac, char** av)
   for (i = 0; i != N_SWITCH; ++i)
   {
     const double vi = V_REF * rdiv_2 / (ri[i] + rdiv_2);
-    printf("i = %02zu r_i = % 9.01lf, v_i = % 1.01lf\n", i, ri[i], vi);
+    printf("i = %02zu r = % 9.01lf, v = % 1.01lf\n", i, ri[i], vi);
   }
 
   return 0;
