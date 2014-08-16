@@ -127,10 +127,21 @@ __attribute__((unused)) static void sel_test(void)
 
 /* sniffer and pulse slicer logic */
 
-#define PULSE_MAX_COUNT 1024
-static uint8_t pulse_timer[PULSE_MAX_COUNT];
-static volatile uint16_t pulse_index;
+#define PULSE_MAX_COUNT 512
+#define FRAME_MAX_COUNT 2
+
+/* global pulse array, space for all frames */
+static uint8_t pulse_all_timers[PULSE_MAX_COUNT * FRAME_MAX_COUNT];
+
+/* pointer to the frame specific location in pulse_all_timers */
+static uint8_t* pulse_timer;
+
+/* per frame count */
+static volatile uint16_t pulse_all_counts[FRAME_MAX_COUNT];
+
+/* current frame pulse count and index */
 static volatile uint16_t pulse_count;
+static volatile uint16_t pulse_index;
 
 #define PULSE_FLAG_DONE (1 << 0)
 #define PULSE_FLAG_OVF (1 << 1)
@@ -224,7 +235,7 @@ static inline uint8_t filter_data(void)
   return x;
 }
 
-static void do_listen(void)
+static void do_listen(uint8_t frame_index)
 {
   uint8_t pre_state;
   uint8_t cur_state;
@@ -240,6 +251,7 @@ static void do_listen(void)
   /* reset pulse slicer context */
   pulse_count = 0;
   pulse_flags = 0;
+  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
 
   /* put in rx continuous mode */
   rfm69_set_rx_continuous_mode();
@@ -280,12 +292,19 @@ static void do_listen(void)
 
   /* put back in standby mode */
   rfm69_set_standby_mode();
+
+  /* capture the pulse slicer frame specific context */
+  pulse_all_counts[frame_index] = pulse_count;
 }
 
 #ifdef CONFIG_UART
-static void do_print(void)
+static void do_print(uint8_t frame_index)
 {
   uint16_t i;
+
+  /* prepare context */
+  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
+  pulse_count = pulse_all_counts[frame_index];
 
   uart_write((uint8_t*)"flags: ", 7);
   uart_write(uint8_to_string(pulse_flags), 2);
@@ -309,12 +328,15 @@ static void do_print(void)
 }
 #endif /* CONFIG_UART */
 
-static void do_replay(void)
+static void do_replay(uint8_t frame_index)
 {
   /* replay the currently stored pulses */
 
+  /* prepare context */
   pulse_flags = 0;
   pulse_index = 1;
+  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
+  pulse_count = pulse_all_counts[frame_index];
 
   /* put in tx continuous mode */
   rfm69_set_tx_continuous_mode();
@@ -437,6 +459,7 @@ int main(void)
 {
   uint8_t x;
   uint8_t i;
+  uint8_t frame_index;
 
 #ifdef CONFIG_UART
   uart_setup();
@@ -452,6 +475,10 @@ int main(void)
   {
     x = but_wait();
 
+    /* read the selection switch */
+    frame_index = sel_read();
+    if (frame_index >= FRAME_MAX_COUNT) frame_index = FRAME_MAX_COUNT - 1;
+
     if (x & BUT_RECORD_MASK)
     {
 #ifdef CONFIG_UART
@@ -459,10 +486,10 @@ int main(void)
       uart_write_rn();
 #endif /* CONFIG_UART */
 
-      do_listen();
+      do_listen(frame_index);
 
 #ifdef CONFIG_UART
-      do_print();
+      do_print(frame_index);
 #endif /* CONFIG_UART */
     }
 
@@ -475,8 +502,8 @@ int main(void)
 
       for (i = 0; i != 7; ++i)
       {
-	_delay_us(500);
-	do_replay();
+	_delay_ms(4);
+	do_replay(frame_index);
       }
     }
   }
