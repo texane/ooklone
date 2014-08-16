@@ -105,7 +105,7 @@ static uint8_t sel_read(void)
   else r1 = r1_hi;
 
   /* correct resistor value as the one used do not match */
-  /* remove if exact values and simplify computation */
+  /* remove if exact values and simplify (computation, uint32) */
   if (r1 < 200) r1 = 166;
   else if (r1 < 500) r1 = 400;
   else if (r1 < 900) r1 = 750;
