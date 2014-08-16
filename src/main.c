@@ -108,6 +108,22 @@ static uint8_t sel_read(void)
   return (uint8_t)(x / 10);
 }
 
+#ifdef CONFIG_UART
+__attribute__((unused)) static void sel_test(void)
+{
+  while (1)
+  {
+    const uint8_t x = sel_read();
+    uart_write(uint8_to_string(x), 2);
+    uart_write_rn();
+    _delay_ms(250);
+    _delay_ms(250);
+    _delay_ms(250);
+    _delay_ms(250);
+  }
+}
+#endif /* CONFIG_UART */
+
 
 /* sniffer and pulse slicer logic */
 
@@ -431,17 +447,6 @@ int main(void)
   sel_setup();
 
   sei();
-
-  while (1)
-  {
-    const uint8_t x = sel_read();
-    uart_write(uint8_to_string(x), 2);
-    uart_write_rn();
-    _delay_ms(250);
-    _delay_ms(250);
-    _delay_ms(250);
-    _delay_ms(250);
-  }
 
   while (1)
   {
