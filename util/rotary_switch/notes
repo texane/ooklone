@@ -9,6 +9,11 @@ the switch has n_switch positions, we have an adc_step
 value of:
 adc_step = adc_hi / n_switch
 
+note that n_switch can be set to the actual position
+count minus one, because a step is not wanted for the
+last position. for instance, a 2 position switch needs
+only 2 - 1 = 1 step.
+
 if v_ref is the adc reference voltage and v_i is
 the value in volts measured by the adc at switch
 position i, we have the following relation:
@@ -21,15 +26,29 @@ compute for every switch position. Lets call it r_i,
 we have:
 v_i = v_ref * rdiv_2 / (r_i + rdiv_2) (eq_1)
 
+also note from eq_1 that:
+v_i = v_ref * rdiv_2 / (r_i + rdiv_2)
+thus
+adc * adc_ref / adc_hi = adc_ref * rdiv_2 / (r_i + rdiv_2)
+by symplifying:
+r_i = adc_hi * rdiv_2 / adc - rdiv_2 (eq_2)
+
 by equating eq_0 and eq_1:
 v_ref / adc_hi * (adc_step * i) = v_ref * rdiv_2 / (r_i + rdiv_2)
 (adc_step * i) / adc_hi = rdiv_2 / (r_i + rdiv_2)
 (adc_step * i) / (adc_hi * rdiv_2) = 1 / (r_i + rdiv_2)
 
-r_i = (adc_hi * rdiv_2) / (adc_step * i) - rdiv_2 (eq_2)
+r_i = (adc_hi * rdiv_2) / (adc_step * i) - rdiv_2 (eq_3)
 
-from eq_2:
+from eq_3:
 i = (rdiv_2 * n_switch) / (r_i + r2)
+and from eq_2:
+r_i = adc_hi * rdiv_2 / adc - rdiv_2
+thus:
+i = n_switch * adc / adc_hi (eq_4)
+
+eq_4 is the equation we use to retrieve the position using
+the value read from the adc.
 
 in our case, we arbitrarly choose rdiv_2 = 1000 ohms. Note
 that you can play on this value to scale the other resistors.
