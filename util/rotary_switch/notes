@@ -38,10 +38,10 @@ chose it so that it is big enough, le say 20 * r_2. in our
 case, with a switch of 7 position and a voltage reference
 of 3.3V, we have the following values:
 
-i = 00, r =  120000.0, adc = 0x00000008, v =  0.0
-i = 01, r =    6000.0, adc = 0x00000092, v =  0.5
-i = 02, r =    2500.0, adc = 0x00000124, v =  0.9
-i = 03, r =    1333.3, adc = 0x000001b6, v =  1.4
-i = 04, r =     750.0, adc = 0x00000249, v =  1.9
-i = 05, r =     400.0, adc = 0x000002db, v =  2.4
-i = 06, r =     166.7, adc = 0x0000036d, v =  2.8
+i = 00, r =  120000.0, adc = 0x00000008, v =  0.0 (12000)
+i = 01, r =    6000.0, adc = 0x00000092, v =  0.5 (6800)
+i = 02, r =    2500.0, adc = 0x00000124, v =  0.9 (2400)
+i = 03, r =    1333.3, adc = 0x000001b6, v =  1.4 (1200)
+i = 04, r =     750.0, adc = 0x00000249, v =  1.9 (690)
+i = 05, r =     400.0, adc = 0x000002db, v =  2.4 (390)
+i = 06, r =     166.7, adc = 0x0000036d, v =  2.8 (150)
