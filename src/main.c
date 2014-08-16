@@ -7,7 +7,14 @@
 
 #define CONFIG_UART
 #ifdef CONFIG_UART
+
 #include "./uart.c"
+
+static void uart_write_rn(void)
+{
+  uart_write((uint8_t*)"\r\n", 2);
+}
+
 #endif /* CONFIG_UART */
 
 
@@ -18,6 +25,95 @@ __attribute__((unused)) static uint8_t get_rssi_avg(void)
   uint32_t sum = 0;
   for (i = 0; i != 1000; ++i) sum += rfm69_get_rssi();
   return (uint8_t)(sum / (uint32_t)i);
+}
+
+
+/* selection rotary switch */
+
+#define SEL_DDR DDRC
+#define SEL_SHIFT 3
+#define SEL_MASK (1 << SEL_SHIFT)
+
+static void sel_setup(void)
+{
+  /* input pin */
+  SEL_DDR &= ~SEL_MASK;
+
+  /* setup adc in free running mode, use aref */
+  ADCSRA = 7;
+  ADCSRB = 0;
+  ADMUX = SEL_SHIFT;
+  DIDR0 |= SEL_MASK;
+}
+
+static inline void sel_wait_adc(void)
+{
+  /* 13 cycles per conversion */
+
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+  __asm__ __volatile__ ("nop\n");
+}
+
+static inline void sel_add_adc(uint16_t* x)
+{
+  ADCSRA |= 1 << 6;
+  while (ADCSRA & (1 << 6)) ;
+  *x += ADC & ((1 << 10) - 1);
+}
+
+static uint8_t sel_read(void)
+{
+  /* return the button position */
+  /* refer to util/rotary_switch for more info */
+
+  static const uint32_t adc_hi = 1 << 10;
+  static const uint32_t r1_hi = 12000;
+  static const uint32_t r2 = 1000;
+  static const uint32_t npos = 7;
+
+  uint16_t x;
+  uint32_t r1;
+
+  /* enable adc and start conversion */
+  ADCSRA |= 1 << 7;
+
+  /* wait at least 12 cycles before first conversion */
+  sel_wait_adc();
+
+  x = 0;
+  sel_add_adc(&x);
+  sel_add_adc(&x);
+  sel_add_adc(&x);
+  sel_add_adc(&x);
+
+  /* disable adc */
+  ADCSRA &= ~(1 << 7);
+
+  /* 4 factor comes from averaging */
+  if (x) r1 = (4 * adc_hi * r2) / (uint32_t)x - r2;
+  else r1 = r1_hi;
+
+  /* correct resistor value as the one used do not match */
+  /* remove if exact values and simplify computation */
+  if (r1 < 200) r1 = 166;
+  else if (r1 < 500) r1 = 400;
+  else if (r1 < 900) r1 = 750;
+  else if (r1 < 2000) r1 = 1333;
+  else if (r1 < 3000) r1 = 2500;
+  else if (r1 < 8000) r1 = 6000;
+
+  return (uint8_t)((r2 * npos) / (r1 + r2));
 }
 
 
@@ -108,13 +204,6 @@ ISR(TIMER1_COMPB_vect)
   TCNT1 = 0;
   OCR1B = pulse_timer[pulse_index++];
 }
-
-#ifdef CONFIG_UART
-static void uart_write_rn(void)
-{
-  uart_write((uint8_t*)"\r\n", 2);
-}
-#endif /* CONFIG_UART */
 
 static inline uint8_t filter_data(void)
 {
@@ -346,8 +435,8 @@ int main(void)
 #endif /* CONFIG_UART */
 
   rfm69_setup();
-
   but_setup();
+  sel_setup();
 
   sei();
 

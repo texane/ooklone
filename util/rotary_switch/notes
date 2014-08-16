@@ -28,6 +28,9 @@ v_ref / adc_hi * (adc_step * i) = v_ref * rdiv_2 / (r_i + rdiv_2)
 
 r_i = (adc_hi * rdiv_2) / (adc_step * i) - rdiv_2 (eq_2)
 
+from eq_2:
+i = (rdiv_2 * n_switch) / (r_i + r2)
+
 in our case, we arbitrarly choose rdiv_2 = 1000 ohms. Note
 that you can play on this value to scale the other resistors.
 It is useful if like me you are peeking resistors from a set
