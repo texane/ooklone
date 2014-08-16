@@ -37,11 +37,11 @@ It is useful if like me you are peeking resistors from a set
 already available.
 
 Also, r_0 cannot be computed (division by zero). We should
-chose it so that it is big enough, le say 20 * r_2. in our
+chose it so that it is big enough, le say 100 * r_2. in our
 case, with a switch of 7 position and a voltage reference
 of 3.3V, we have the following values:
 
-i = 00, r =  120000.0, adc = 0x00000008, v =  0.0 (12000)
+i = 00, r =  120000.0, adc = 0x00000008, v =  0.0 (120000)
 i = 01, r =    6000.0, adc = 0x00000092, v =  0.5 (6800)
 i = 02, r =    2500.0, adc = 0x00000124, v =  0.9 (2400)
 i = 03, r =    1333.3, adc = 0x000001b6, v =  1.4 (1200)

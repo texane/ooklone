@@ -78,12 +78,10 @@ static uint8_t sel_read(void)
   /* refer to util/rotary_switch for more info */
 
   static const uint32_t adc_hi = 1 << 10;
-  static const uint32_t r1_hi = 12000;
-  static const uint32_t r2 = 1000;
   static const uint32_t npos = 7;
 
-  uint16_t x;
-  uint32_t r1;
+  uint16_t sum;
+  uint8_t x;
 
   /* enable adc and start conversion */
   ADCSRA |= 1 << 7;
@@ -91,29 +89,23 @@ static uint8_t sel_read(void)
   /* wait at least 12 cycles before first conversion */
   sel_wait_adc();
 
-  x = 0;
-  sel_add_adc(&x);
-  sel_add_adc(&x);
-  sel_add_adc(&x);
-  sel_add_adc(&x);
+  sum = 0;
+  sel_add_adc(&sum);
+  sel_add_adc(&sum);
+  sel_add_adc(&sum);
+  sel_add_adc(&sum);
 
   /* disable adc */
   ADCSRA &= ~(1 << 7);
 
-  /* 4 factor comes from averaging */
-  if (x) r1 = (4 * adc_hi * r2) / (uint32_t)x - r2;
-  else r1 = r1_hi;
+  /* FIXME: i put a 12K instead of 120K */
+  if (sum <= (0x60 * 4)) sum = 0x08 * 4;
 
-  /* correct resistor value as the one used do not match */
-  /* remove if exact values and simplify (computation, uint32) */
-  if (r1 < 200) r1 = 166;
-  else if (r1 < 500) r1 = 400;
-  else if (r1 < 900) r1 = 750;
-  else if (r1 < 2000) r1 = 1333;
-  else if (r1 < 3000) r1 = 2500;
-  else if (r1 < 8000) r1 = 6000;
-
-  return (uint8_t)((r2 * npos) / (r1 + r2));
+  /* 4 comes from averaging */
+  /* 10 is for scaling then rounding down */
+  x = (npos * sum * 10) / (adc_hi * 4);
+  if ((x % 10) >= 5) return (uint8_t)(1 + x / 10);
+  return (uint8_t)(x / 10);
 }
 
 
@@ -439,6 +431,17 @@ int main(void)
   sel_setup();
 
   sei();
+
+  while (1)
+  {
+    const uint8_t x = sel_read();
+    uart_write(uint8_to_string(x), 2);
+    uart_write_rn();
+    _delay_ms(250);
+    _delay_ms(250);
+    _delay_ms(250);
+    _delay_ms(250);
+  }
 
   while (1)
   {
