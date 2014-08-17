@@ -1,0 +1,207 @@
+diff --git a/src/main.c b/src/main.c
+index 0792b82..620f9f0 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -3,9 +3,10 @@
+ #include <avr/interrupt.h>
+ #include <avr/sleep.h>
+ #include <util/delay.h>
++#include <util/delay_basic.h>
+ #include "./rfm69.c"
+ 
+-#define CONFIG_UART
++/* #define CONFIG_UART */
+ #ifdef CONFIG_UART
+ 
+ #include "./uart.c"
+@@ -18,6 +19,8 @@ static void uart_write_rn(void)
+ #endif /* CONFIG_UART */
+ 
+ 
++/* average the rssi level */
++
+ __attribute__((unused)) static uint8_t get_rssi_avg(void)
+ {
+   /* note: actual_rssi = - rfm69_get_rssi / 2 */
+@@ -125,10 +128,10 @@ __attribute__((unused)) static void sel_test(void)
+ #endif /* CONFIG_UART */
+ 
+ 
+-/* sniffer and pulse slicer logic */
++/* slicer global context */
+ 
+-#define PULSE_MAX_COUNT 512
+-#define FRAME_MAX_COUNT 2
++#define PULSE_MAX_COUNT 1024
++#define FRAME_MAX_COUNT 1
+ 
+ /* global pulse array, space for all frames */
+ static uint8_t pulse_all_timers[PULSE_MAX_COUNT * FRAME_MAX_COUNT];
+@@ -139,6 +142,9 @@ static uint8_t* pulse_timer;
+ /* per frame count */
+ static volatile uint16_t pulse_all_counts[FRAME_MAX_COUNT];
+ 
++/* end of frame timers */
++static uint8_t pulse_all_eofs[FRAME_MAX_COUNT];
++
+ /* current frame pulse count and index */
+ static volatile uint16_t pulse_count;
+ static volatile uint16_t pulse_index;
+@@ -147,22 +153,21 @@ static volatile uint16_t pulse_index;
+ #define PULSE_FLAG_OVF (1 << 1)
+ static volatile uint8_t pulse_flags;
+ 
+-/* pulse timer resolution is 4 or 16 us */
+-/* note that the counters are stored using 8 bits */
+-/* values, which equals 1024 or 4096 us and should */
+-/* be considered when setting pulse_max_timer. */
+-#define PULSE_TIMER_RES_US 16
++/* pulse timer resolution is 4 or 16 us. this is actually defined */
++/* by the timer prescaler value and impacts the maximum timer value */
++/* that can be stored in 8 bits (PULSE_MAX_TIMER). we want to stay */
++/* on 8 bits to have a maximum buffer size. */
++#define PULSE_TIMER_RES_US 4
+ 
+ #define pulse_us_to_timer(__us) (1 + (__us) / PULSE_TIMER_RES_US)
+-
+-static inline uint16_t pulse_timer_to_us(uint8_t x)
+-{
+-  return ((uint16_t)x) * PULSE_TIMER_RES_US;
+-}
++#define pulse_timer_to_us(__x) (((uint16_t)__x) * PULSE_TIMER_RES_US)
+ 
+ /* max is 1024 us with 8 bits counter and 4 us resolution */
+ /* max is 4096 us with 8 bits counter and 16 us resolution */
+-static const uint16_t pulse_max_timer = pulse_us_to_timer(3000);
++#define PULSE_MAX_TIMER 0xff
++
++
++/* interrupt routines */
+ 
+ static inline void pulse_common_vect(uint8_t flags)
+ {
+@@ -195,7 +200,7 @@ static void pcint2_vect(void)
+ #endif
+ 
+   /* store counter */
+-  if (n > pulse_max_timer) n = pulse_max_timer;
++  if (n > PULSE_MAX_TIMER) n = PULSE_MAX_TIMER;
+   pulse_timer[pulse_count++] = (uint8_t)n;
+ }
+ 
+@@ -224,6 +229,9 @@ ISR(TIMER1_COMPB_vect)
+   OCR1B = pulse_timer[pulse_index++];
+ }
+ 
++
++/* listen for a frame */
++
+ static inline uint8_t filter_data(void)
+ {
+   /* glitch filtering: consider a one only if no */
+@@ -245,7 +253,7 @@ static void do_listen(uint8_t frame_index)
+   TCNT1 = 0;
+   TCCR1A = 0;
+   TCCR1C = 0;
+-  OCR1A = pulse_max_timer;
++  OCR1A = 0x400; /* toremove, pulse_max_timer */
+   TIMSK1 = (1 << 1) | (1 << 0);
+ 
+   /* reset pulse slicer context */
+@@ -295,8 +303,14 @@ static void do_listen(uint8_t frame_index)
+ 
+   /* capture the pulse slicer frame specific context */
+   pulse_all_counts[frame_index] = pulse_count;
++
++  /* compute end of frame timer */
++  pulse_all_eofs[frame_index] = PULSE_MAX_TIMER;
+ }
+ 
++
++/* slicer context printing */
++
+ #ifdef CONFIG_UART
+ static void do_print(uint8_t frame_index)
+ {
+@@ -310,6 +324,10 @@ static void do_print(uint8_t frame_index)
+   uart_write(uint8_to_string(pulse_flags), 2);
+   uart_write_rn();
+ 
++  uart_write((uint8_t*)"eof  : ", 7);
++  uart_write(uint8_to_string(pulse_all_eofs[frame_index]), 2);
++  uart_write_rn();
++
+   for (i = 0; i != pulse_count; ++i)
+   {
+     const uint16_t us = pulse_timer_to_us(pulse_timer[i]);
+@@ -328,6 +346,22 @@ static void do_print(uint8_t frame_index)
+ }
+ #endif /* CONFIG_UART */
+ 
++
++/* frame replay */
++
++static void delay_eof_timer(uint8_t x)
++{
++  /* busy wait for end of frame delay given in timer ticks */
++
++#if (PULSE_TIMER_RES_US == 4)
++  static const uint16_t prescal = 64;
++#elif (PULSE_TIMER_RES_US == 16)
++  static const uint16_t prescal = 256;
++#endif
++
++  _delay_loop_2((uint16_t)x * prescal);
++}
++
+ static void do_replay(uint8_t frame_index)
+ {
+   /* replay the currently stored pulses */
+@@ -369,6 +403,8 @@ static void do_replay(uint8_t frame_index)
+ 
+   /* put back in standby mode */
+   rfm69_set_standby_mode();
++
++  delay_eof_timer(pulse_all_eofs[frame_index]);
+ }
+ 
+ 
+@@ -502,7 +538,6 @@ int main(void)
+ 
+       for (i = 0; i != 7; ++i)
+       {
+-	_delay_ms(4);
+ 	do_replay(frame_index);
+       }
+     }
+diff --git a/src/rfm69.c b/src/rfm69.c
+index f52a123..f507535 100644
+--- a/src/rfm69.c
++++ b/src/rfm69.c
+@@ -252,7 +252,7 @@ static void rfm69_setup(void)
+   /* fcar = fstep * frf */
+   /* fstep = fxosc / (2^19) */
+   /* fxosc = 32MHz */
+-#if 0
++#if 1
+   /* true frequency */
+   rfm69_write_frf((uint32_t)7109345.28);
+ #else
+@@ -262,7 +262,7 @@ static void rfm69_setup(void)
+ 
+   /* ook related values, cf. 3.4.12 */
+ 
+-#if 1
++#if 0
+ 
+   /* peak mode: a one is detected when the rssi reaches */
+   /* peak_thresh - 6db. the peak_thresh value is updated with */
+@@ -281,7 +281,7 @@ static void rfm69_setup(void)
+   /* fixed threshold */
+ 
+   rfm69_write_ook_peak(0 << 6);
+-  rfm69_write_ook_fix(70);
++  rfm69_write_ook_fix(60);
+ 
+ #endif
+ 
