@@ -252,13 +252,9 @@ static void rfm69_setup(void)
   /* fcar = fstep * frf */
   /* fstep = fxosc / (2^19) */
   /* fxosc = 32MHz */
-#if 0
-  /* true frequency */
+
+  /* 433.92 MHz carrier */
   rfm69_write_frf((uint32_t)7109345.28);
-#else
-  /* shifted frequency as seen in rtlsdr */
-  rfm69_write_frf((uint32_t)7110515);
-#endif
 
   /* ook related values, cf. 3.4.12 */
 
@@ -281,7 +277,7 @@ static void rfm69_setup(void)
   /* fixed threshold */
 
   rfm69_write_ook_peak(0 << 6);
-  rfm69_write_ook_fix(70);
+  rfm69_write_ook_fix(60);
 
 #endif
 
