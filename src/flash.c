@@ -151,7 +151,7 @@ static void flash_erase_subsector(uint16_t i)
 
   /* address, lsB first */
   spi_write_uint8(0);
-  spi_write_uint8(i & 0x0f);
+  spi_write_uint8((i & 0xf) << 4);
   spi_write_uint8((i >> 4) & 0xff);
 
   flash_csn_high();
@@ -242,6 +242,7 @@ static void print_buf(uint8_t* s, uint16_t n)
     uart_write(uint8_to_string(s[i]), 2);
   }
   uart_write((uint8_t*)"\r\n", 2);
+  uart_write((uint8_t*)"\r\n", 2);
 }
 
 static void erase_buf(uint8_t* s, uint16_t n)
@@ -250,15 +251,16 @@ static void erase_buf(uint8_t* s, uint16_t n)
   for (i = 0; i != n; ++i, ++s) *s = 0x2a;
 }
 
-static void fill_buf(uint8_t* s, uint16_t n)
+static void fill_buf(uint8_t* s, uint8_t i, uint16_t n)
 {
-  uint16_t i;
-  for (i = 0; i != n; ++i, ++s) *s = (uint8_t)i;
+  for (; n; --n, ++s) *s = i;
 }
 
 int main(void)
 {
   uint8_t buf[FLASH_PAGE_SIZE];
+  uint8_t i;
+  uint8_t j;
 
   /* unselect rfm69 slave */
 #define RFM69_IO_CSN_DDR DDRB
@@ -277,21 +279,28 @@ int main(void)
     flash_read_id(buf);
     print_buf(buf, 20);
 
-    PRINT_LINE();
+    for (j = 0; j != 4; ++j)
+    {
+      flash_erase_subsector(j);
 
-    flash_erase_subsector(0);
+#define PAGE_PER_SUBSECTOR (FLASH_SUBSECTOR_SIZE / FLASH_PAGE_SIZE)
+      for (i = 0; i != PAGE_PER_SUBSECTOR; ++i)
+      {
+	const uint16_t addr = j * PAGE_PER_SUBSECTOR + i;
+	fill_buf(buf, (uint8_t)addr, FLASH_PAGE_SIZE);
+	flash_program_page(addr, buf);
+      }
+    }
 
-    PRINT_LINE();
-
-    fill_buf(buf, FLASH_PAGE_SIZE);
-    flash_program_page(0, buf);
-
-    PRINT_LINE();
-
-    erase_buf(buf, FLASH_PAGE_SIZE);
-    flash_read_page(0, buf);
-
-    print_buf(buf, FLASH_PAGE_SIZE);
+    for (j = 0; j != 4; ++j)
+    {
+      for (i = 0; i != PAGE_PER_SUBSECTOR; ++i)
+      {
+	const uint16_t addr = j * PAGE_PER_SUBSECTOR + i;
+	flash_read_page(addr, buf);
+	print_buf(buf, 0x20);
+      }
+    }
 
     _delay_ms(250);
     _delay_ms(250);
