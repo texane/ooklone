@@ -115,5 +115,23 @@ static void spi_read(uint8_t* s, uint8_t len)
   for (; len; --len, ++s) *s = spi_read_uint8();
 }
 
+static void spi_read_512(uint8_t* s)
+{
+  /* len is limited to 255, has to split */
+
+  spi_read(s + 0 * 255, 255);
+  spi_read(s + 1 * 255, 255);
+  spi_read(s + 2 * 255, 2);
+}
+
+static void spi_write_512(const uint8_t* s)
+{
+  /* len is limited to 255, has to split */
+
+  spi_write(s + 0 * 255, 255);
+  spi_write(s + 1 * 255, 255);
+  spi_write(s + 2 * 255, 2);
+}
+
 
 #endif /* SPI_C_INCLUDED */

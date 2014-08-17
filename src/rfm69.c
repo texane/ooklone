@@ -226,7 +226,6 @@ static void rfm69_setup(void)
 {
   uint8_t x;
 
-  spi_setup_master();
   rfm69_csn_setup();
   rfm69_csn_high();
 

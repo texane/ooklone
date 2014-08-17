@@ -5,6 +5,7 @@
 #include <util/delay.h>
 #include <util/delay_basic.h>
 #include "./rfm69.c"
+#include "./flash.c"
 
 #define CONFIG_UART
 #ifdef CONFIG_UART
@@ -501,7 +502,9 @@ int main(void)
   uart_setup();
 #endif /* CONFIG_UART */
 
+  spi_setup_master();
   rfm69_setup();
+  flash_setup();
   but_setup();
   sel_setup();
 
