@@ -22,7 +22,6 @@ ps_load_frame(frame_index)
 ps_store_frame(frame_index)
 
 
-
 [ rename pulse_xxx into frame_xxx where it makes more sense ]
 
 
@@ -31,6 +30,11 @@ ps_store_frame(frame_index)
 
 [ move sel_xxx into sel.c ]
 
+
+[ led based indicators ]
+low voltage: turn on when low voltage
+operation failed: turn on when current operation failed
+only one led needed ?
 
 [ make eagle schematics ]
 
