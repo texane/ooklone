@@ -16,6 +16,7 @@
 #define FLASH_PAGE_SIZE 256
 #define FLASH_SUBSECTOR_SIZE (4 * 1024)
 #define FLASH_SECTOR_SIZE (64 * 1024)
+#define FLASH_SUBSECTOR_PAGE_COUNT (FLASH_SUBSECTOR_SIZE / FLASH_PAGE_SIZE)
 
 #define FLASH_CSN_DDR DDRB
 #define FLASH_CSN_PORT PORTB
@@ -129,9 +130,13 @@ static void flash_erase_sector(uint16_t i)
   spi_write_uint8(0xd8);
 
   /* address, lsB first */
+#if (FLASH_SECTOR_SIZE == (64 * 1024))
   spi_write_uint8(0);
   spi_write_uint8(0);
   spi_write_uint8(i & 0xff);
+#else
+#error "missing implementation"
+#endif
 
   flash_csn_high();
 
@@ -150,9 +155,13 @@ static void flash_erase_subsector(uint16_t i)
   spi_write_uint8(0x20);
 
   /* address, lsB first */
+#if (FLASH_SUBSECTOR_SIZE == (4 * 1024))
   spi_write_uint8(0);
   spi_write_uint8((i & 0xf) << 4);
   spi_write_uint8((i >> 4) & 0xff);
+#else
+#error "missing implementation"
+#endif
 
   flash_csn_high();
 
@@ -170,13 +179,12 @@ static void flash_erase_bulk(void)
   flash_wait_erase();
 }
 
-static void flash_program_page(uint16_t i, const uint8_t* s)
+static void flash_program_common(uint16_t i, const uint8_t* s, uint8_t n)
 {
-  /* write one page. assume the page previously erased. */
+  /* write n bytes. assume the page previously erased. */
   /* i the page position in FLASH_PAGE_SIZE units */
-  /* s the buffer to write of FLASH_PAGE_SIZE bytes */
-
-  uint8_t n;
+  /* s the buffer to write */
+  /* n the byte count. 0 <= n <= 0xff */
 
   flash_set_wren();
 
@@ -185,38 +193,75 @@ static void flash_program_page(uint16_t i, const uint8_t* s)
   spi_write_uint8(0x02);
 
   /* address, lsB first */
+#if (FLASH_PAGE_SIZE == 256)
   spi_write_uint8(0);
   spi_write_uint8((uint8_t)((i >> 0) & 0xff));
   spi_write_uint8((uint8_t)((i >> 8) & 0xff));
+#else
+#error "missing implementation"
+#error "modify the loop below to using uint16_t"
+#endif
 
   /* data */
-  for (n = 0; n != 0xff; ++n, ++s) spi_write_uint8(*s);
-  spi_write_uint8(*s);
+  for (; n; --n, ++s) spi_write_uint8(*s);
+}
 
+static inline void flash_program_bytes(uint16_t i, const uint8_t* s, uint8_t n)
+{
+  flash_program_common(i, s, n);
   flash_csn_high();
-
   flash_wait_program();
 }
 
-static void flash_read_page(uint16_t i, uint8_t* s)
+static inline void flash_program_page(uint16_t i, const uint8_t* s)
 {
-  /* read one page */
-  /* i the page position in FLASH_PAGE_SIZE units */
-  /* s the buffer to write of FLASH_PAGE_SIZE bytes */
+#if (FLASH_PAGE_SIZE == 256)
+  flash_program_common(i, s, 0xff);
+  spi_write_uint8(s[0xff]);
+#else
+#error "missing implementation"
+#endif
 
-  uint8_t n;
+  flash_csn_high();
+  flash_wait_program();
+}
+
+static void flash_read_common(uint16_t i, uint8_t* s, uint8_t n)
+{
+  /* i the page position in FLASH_PAGE_SIZE units */
+  /* s the buffer to read */
+  /* n the size in bytes. must be 0 <= n <= 0xff. */
 
   flash_csn_low();
 
   spi_write_uint8(0x03);
 
   /* address, lsB first */
+#if (FLASH_PAGE_SIZE == 256)
   spi_write_uint8(0);
   spi_write_uint8((uint8_t)((i >> 0) & 0xff));
   spi_write_uint8((uint8_t)((i >> 8) & 0xff));
+#else
+#error "missing implementation"
+#endif
 
-  for (n = 0; n != 0xff; ++n, ++s) *s = spi_read_uint8();
-  *s = spi_read_uint8();
+  for (; n; --n, ++s) *s = spi_read_uint8();
+}
+
+static inline void flash_read_bytes(uint16_t i, uint8_t* s, uint8_t n)
+{
+  flash_read_common(i, s, n);
+  flash_csn_high();
+}
+
+static inline void flash_read_page(uint16_t i, uint8_t* s)
+{
+#if (FLASH_PAGE_SIZE == 256)
+  flash_read_common(i, s, 0xff);
+  s[0xff] = spi_read_uint8();
+#else
+#error "missing implementation"
+#endif
 
   flash_csn_high();
 }

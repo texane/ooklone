@@ -131,24 +131,17 @@ __attribute__((unused)) static void sel_test(void)
 
 /* slicer global context */
 
-#define PULSE_MAX_COUNT 512
-#define FRAME_MAX_COUNT 2
+#define PULSE_MAX_COUNT 1024
 
-/* global pulse array, space for all frames */
-static uint8_t pulse_all_timers[PULSE_MAX_COUNT * FRAME_MAX_COUNT];
-
-/* pointer to the frame specific location in pulse_all_timers */
-static uint8_t* pulse_timer;
-
-/* per frame count */
-static volatile uint16_t pulse_all_counts[FRAME_MAX_COUNT];
-
-/* end of frame timers */
-static uint8_t pulse_all_eofs[FRAME_MAX_COUNT];
+/* frame pulse duration, in timer units */
+static uint8_t pulse_timer[PULSE_MAX_COUNT];
 
 /* current frame pulse count and index */
 static volatile uint16_t pulse_count;
 static volatile uint16_t pulse_index;
+
+/* end of frame timer */
+static uint8_t pulse_eof;
 
 #define PULSE_FLAG_DONE (1 << 0)
 #define PULSE_FLAG_OVF (1 << 1)
@@ -244,7 +237,7 @@ static inline uint8_t filter_data(void)
   return x;
 }
 
-static void do_listen(uint8_t frame_index)
+static void do_listen(void)
 {
   uint8_t pre_state;
   uint8_t cur_state;
@@ -260,7 +253,6 @@ static void do_listen(uint8_t frame_index)
   /* reset pulse slicer context */
   pulse_count = 0;
   pulse_flags = 0;
-  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
 
   /* put in rx continuous mode */
   rfm69_set_rx_continuous_mode();
@@ -302,31 +294,104 @@ static void do_listen(uint8_t frame_index)
   /* put back in standby mode */
   rfm69_set_standby_mode();
 
-  /* capture the pulse slicer frame specific context */
-  pulse_all_counts[frame_index] = pulse_count;
-
   /* compute end of frame timer */
-  pulse_all_eofs[frame_index] = PULSE_MAX_TIMER;
+  pulse_eof = PULSE_MAX_TIMER;
+}
+
+
+/* store and load frame to and from the flash memory */
+
+/* flash organization */
+/* the first subsector is dedicated to global meta data. */
+/* starting at subsector 1, there is one subsector per frame. */
+/* each frame contains the pulse timer array followed by the */
+/* pulse count and end of frame. they are stored using the */
+/* same data types as in the code. */
+
+typedef struct
+{
+#define OOKLONE_META_MAGIC 0xdeadbeef
+  uint32_t magic;
+  uint8_t version;
+  uint8_t frame_count;
+} __attribute__((packed)) ooklone_meta_t;
+
+static ooklone_meta_t ooklone_meta;
+
+static void do_store(uint8_t frame_index)
+{
+  /* store the current frame in flash */
+
+  static const uint16_t meta_page_count = FLASH_SUBSECTOR_PAGE_COUNT;
+  static const uint16_t frame_page_count = FLASH_SUBSECTOR_PAGE_COUNT;
+
+  uint8_t n;
+  uint16_t i;
+  uint8_t* p;
+  uint16_t buf[2];
+
+  /* assume there is one subsector for meta data and per frame */
+  flash_erase_subsector(1 + frame_index);
+
+  /* store pulse_timer */
+  i = meta_page_count + (uint16_t)frame_index * frame_page_count;
+  p = pulse_timer;
+  n = PULSE_MAX_COUNT / FLASH_PAGE_SIZE;
+  for (; n; --n, ++i, p += FLASH_PAGE_SIZE) flash_program_page(i, p);
+
+  /* store pulse_count and pulse_eof */
+  buf[0] = pulse_count;
+  buf[1] = pulse_eof;
+  flash_program_bytes(i, (const uint8_t*)buf, sizeof(buf));
+
+  /* update metadata */
+  if (frame_index >= ooklone_meta.frame_count)
+  {
+    ooklone_meta.frame_count = frame_index + 1;
+    flash_erase_subsector(0);
+    flash_program_bytes(0, (uint8_t*)&ooklone_meta, sizeof(ooklone_meta));
+  }
+}
+
+static void do_load(uint8_t frame_index)
+{
+  /* load the current frame from flash */
+
+  static const uint16_t meta_page_count = FLASH_SUBSECTOR_PAGE_COUNT;
+  static const uint16_t frame_page_count = FLASH_SUBSECTOR_PAGE_COUNT;
+
+  /* assume frame_index < ooklone_meta.frame_count */
+  uint8_t n;
+  uint8_t* p;
+  uint16_t i;
+  uint16_t buf[2];
+
+  /* load pulse_timer */
+  i = meta_page_count + (uint16_t)frame_index * frame_page_count;
+  p = pulse_timer;
+  n = PULSE_MAX_COUNT / FLASH_PAGE_SIZE;
+  for (; n; --n, ++i, p += FLASH_PAGE_SIZE) flash_read_page(i, p);
+
+  /* read pulse_count and pulse_eof */
+  flash_read_bytes(i, (uint8_t*)buf, sizeof(buf));
+  pulse_count = buf[0];
+  pulse_eof = buf[1];
 }
 
 
 /* slicer context printing */
 
 #ifdef CONFIG_UART
-static void do_print(uint8_t frame_index)
+static void do_print(void)
 {
   uint16_t i;
-
-  /* prepare context */
-  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
-  pulse_count = pulse_all_counts[frame_index];
 
   uart_write((uint8_t*)"flags: ", 7);
   uart_write(uint8_to_string(pulse_flags), 2);
   uart_write_rn();
 
   uart_write((uint8_t*)"eof  : ", 7);
-  uart_write(uint8_to_string(pulse_all_eofs[frame_index]), 2);
+  uart_write(uint8_to_string(pulse_eof), 2);
   uart_write_rn();
 
   for (i = 0; i != pulse_count; ++i)
@@ -363,15 +428,15 @@ static void delay_eof_timer(uint8_t x)
   _delay_loop_2((uint16_t)x * prescal);
 }
 
-static void do_replay(uint8_t frame_index)
+static void do_replay(void)
 {
   /* replay the currently stored pulses */
+
+  /* assume pulse_timer, pulse_count and pulse_eof valid */
 
   /* prepare context */
   pulse_flags = 0;
   pulse_index = 1;
-  pulse_timer = pulse_all_timers + frame_index * PULSE_MAX_COUNT;
-  pulse_count = pulse_all_counts[frame_index];
 
   /* put in tx continuous mode */
   rfm69_set_tx_continuous_mode();
@@ -405,7 +470,7 @@ static void do_replay(uint8_t frame_index)
   /* put back in standby mode */
   rfm69_set_standby_mode();
 
-  delay_eof_timer(pulse_all_eofs[frame_index]);
+  delay_eof_timer(pulse_eof);
 }
 
 
@@ -510,13 +575,21 @@ int main(void)
 
   sei();
 
+  /* read the ooklone meta from flash */
+  flash_read_bytes(0, (uint8_t*)&ooklone_meta, sizeof(ooklone_meta));
+  if (ooklone_meta.magic != OOKLONE_META_MAGIC)
+  {
+    ooklone_meta.magic = OOKLONE_META_MAGIC;
+    ooklone_meta.version = 0;
+    ooklone_meta.frame_count = 0;
+  }
+
   while (1)
   {
     x = but_wait();
 
     /* read the selection switch */
     frame_index = sel_read();
-    if (frame_index >= FRAME_MAX_COUNT) frame_index = FRAME_MAX_COUNT - 1;
 
     if (x & BUT_RECORD_MASK)
     {
@@ -525,10 +598,11 @@ int main(void)
       uart_write_rn();
 #endif /* CONFIG_UART */
 
-      do_listen(frame_index);
+      do_listen();
+      do_store(frame_index);
 
 #ifdef CONFIG_UART
-      do_print(frame_index);
+      do_print();
 #endif /* CONFIG_UART */
     }
 
@@ -539,10 +613,13 @@ int main(void)
       uart_write_rn();
 #endif /* CONFIG_UART */
 
-      for (i = 0; i != 7; ++i)
-      {
-	do_replay(frame_index);
-      }
+      do_load(frame_index);
+
+#ifdef CONFIG_UART
+      do_print();
+#endif /* CONFIG_UART */
+
+      for (i = 0; i != 7; ++i) do_replay();
     }
   }
 
