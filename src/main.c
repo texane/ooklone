@@ -9,14 +9,7 @@
 
 #define CONFIG_UART
 #ifdef CONFIG_UART
-
 #include "./uart.c"
-
-static void uart_write_rn(void)
-{
-  uart_write((uint8_t*)"\r\n", 2);
-}
-
 #endif /* CONFIG_UART */
 
 
@@ -374,11 +367,11 @@ static void do_print(void)
 {
   uint16_t i;
 
-  uart_write((uint8_t*)"flags: ", 7);
+  UART_WRITE_STRING("flags: ");
   uart_write(uint8_to_string(pulse_flags), 2);
   uart_write_rn();
 
-  uart_write((uint8_t*)"eof  : ", 7);
+  UART_WRITE_STRING("eof  : ");
   uart_write(uint8_to_string(pulse_eof), 2);
   uart_write_rn();
 
@@ -392,7 +385,7 @@ static void do_print(void)
       uart_write(uint16_to_string(i), 4);
     }
 
-    uart_write((uint8_t*)" ", 1);
+    UART_WRITE_STRING(" ");
     uart_write(uint16_to_string(us), 4);
   }
 
@@ -582,7 +575,7 @@ int main(void)
     if (x & BUT_RECORD_MASK)
     {
 #ifdef CONFIG_UART
-      uart_write((uint8_t*)"record", 6);
+      UART_WRITE_STRING("record");
       uart_write_rn();
 #endif /* CONFIG_UART */
 
@@ -597,7 +590,7 @@ int main(void)
     if (x & BUT_PLAY_MASK)
     {
 #ifdef CONFIG_UART
-      uart_write((uint8_t*)"play", 4);
+      UART_WRITE_STRING("play");
       uart_write_rn();
 #endif /* CONFIG_UART */
 

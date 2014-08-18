@@ -72,6 +72,22 @@ static void uart_flush_rx(void)
   }
 }
 
+
+/* string related helper routines */
+
+static void uart_write_rn(void)
+{
+  uart_write((uint8_t*)"\r\n", 2);
+}
+
+#define UART_WRITE_STRING(__s)			\
+do {						\
+  uart_write((uint8_t*)__s, sizeof(__s) - 1);	\
+} while (0)
+
+
+/* numeric helper routines */
+
 static inline uint8_t nibble(uint32_t x, uint8_t i)
 {
   return (x >> (i * 4)) & 0xf;
@@ -81,7 +97,6 @@ static inline uint8_t hex(uint8_t x)
 {
   return (x >= 0xa) ? 'a' + x - 0xa : '0' + x;
 }
-
 
 static uint8_t hex_buf[8];
 
