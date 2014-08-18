@@ -195,11 +195,23 @@ static inline uint8_t rfm69_read_rssi_value(void)
   return rfm69_read_reg(0x24);
 }
 
-static inline uint8_t rfm69_get_rssi(void)
+static uint8_t rfm69_get_rssi(void)
 {
   rfm69_write_rssi_config(1 << 0);
   while ((rfm69_read_rssi_config() & (1 << 1)) == 0) ;
   return rfm69_read_rssi_value();
+}
+
+static uint8_t rfm69_get_rssi_avg(void)
+{
+  /* average the rssi level over n iterations */
+  /* note: actual_rssi = - rfm69_get_rssi / 2 */
+
+  static const uint16_t n = 1000;
+  uint16_t i;
+  uint32_t sum = 0;
+  for (i = 0; i != n; ++i) sum += rfm69_get_rssi();
+  return (uint8_t)(sum / (uint32_t)n);
 }
 
 static inline void rfm69_write_dio_mapping_2(uint8_t x)

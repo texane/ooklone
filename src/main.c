@@ -20,18 +20,6 @@ static void uart_write_rn(void)
 #endif /* CONFIG_UART */
 
 
-/* average the rssi level */
-
-__attribute__((unused)) static uint8_t get_rssi_avg(void)
-{
-  /* note: actual_rssi = - rfm69_get_rssi / 2 */
-  uint16_t i;
-  uint32_t sum = 0;
-  for (i = 0; i != 1000; ++i) sum += rfm69_get_rssi();
-  return (uint8_t)(sum / (uint32_t)i);
-}
-
-
 /* selection rotary switch */
 
 #define SEL_DDR DDRC
