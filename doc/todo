@@ -1,0 +1,38 @@
+[ flash auto increment mode ]
+if the last selection switch position is used when storing
+a frame, store it after the other frames in flash. it can
+be used to implement a sniffing mode. the frame can then
+be read using the host flash reading tool.
+
+
+[ host flash reading tool ]
+implement a tool to read the flash memory from a PC using
+the serial connection.
+
+
+[ persistent storage api ]
+hide meta, frame loading and storing behind a persistent
+storage api. esp. it should the fact it is backed by a
+flash memory and not read a frame if it is already loaded
+into sram. implement it in ps.c:
+ps_setup
+ps_load_meta()
+ps_store_meta()
+ps_load_frame(frame_index)
+ps_store_frame(frame_index)
+
+
+
+[ rename pulse_xxx into frame_xxx where it makes more sense ]
+
+
+[ move but_xxx into but.c ]
+
+
+[ move sel_xxx into sel.c ]
+
+
+[ make eagle schematics ]
+
+
+[ make documentation ]
