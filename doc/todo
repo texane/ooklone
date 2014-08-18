@@ -32,9 +32,10 @@ ps_store_frame(frame_index)
 
 
 [ led based indicators ]
-low voltage: turn on when low voltage
-operation failed: turn on when current operation failed
-only one led needed ?
+low voltage led : turn on when low voltage (cf. avcc.c, could
+use analog comparator and ISR based scheme to detect low voltage)
+operation failed led: turn on when current operation failed
+-> only one led needed ?
 
 [ make eagle schematics ]
 
