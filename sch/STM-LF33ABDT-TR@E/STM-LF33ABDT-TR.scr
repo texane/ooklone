@@ -1,0 +1,92 @@
+# Created by Ultra Librarian Gold 5.3.88 Copyright © 1999-2010
+#  Premier Farnell
+
+Grid mil;
+Set Wire_Bend 2;
+
+
+Edit 'TO228P972X240-3N.pac';
+Layer 1;
+Smd '1' 37 67 -0 R0 (-89 -240);
+Layer 1;
+Smd '2' 260 288 -0 R0 (0 6);
+Layer 1;
+Smd '3' 37 67 -0 R0 (89 -240);
+Layer 51;
+Wire 6 (-71 -138) (-106 -138);
+Wire 6 (-106 -138) (-106 -260);
+Wire 6 (-106 -260) (-71 -260);
+Wire 6 (-71 -260) (-71 -138);
+Wire 6 (106 -138) (71 -138);
+Wire 6 (71 -138) (71 -260);
+Wire 6 (71 -260) (106 -260);
+Wire 6 (106 -260) (106 -138);
+Wire 6 (-18 -138) (-18 -177);
+Wire 6 (-18 -177) (18 -177);
+Wire 6 (18 -177) (18 -138);
+Wire 6 (-130 -138) (130 -138);
+Wire 6 (130 -138) (130 138);
+Wire 6 (130 138) (-130 138);
+Wire 6 (-130 138) (-130 -138);
+Change Size 50;
+Change Ratio 6;
+Text '*' SR0 (-225 -265);
+Layer 21;
+Wire 6 (-106 -162) (-106 -192);
+Wire 6 (71 -162) (71 -192);
+Wire 6 (-71 -162) (-71 -192);
+Wire 6 (106 -162) (106 -192);
+Change Size 50;
+Change Ratio 6;
+Text '*' SR0 (-225 -265);
+Layer 39;
+Wire 6 (-140 -284) (-140 160);
+Wire 6 (-140 160) (140 160);
+Wire 6 (140 160) (140 -284);
+Wire 6 (140 -284) (-140 -284);
+Layer 39;
+Wire 6 (-140 -284) (-140 160) (140 160) (140 -284);
+Layer 25;
+Change Size 82;
+Change Ratio 10;
+Text '>NAME' SR0 (-186 167);
+Layer 27;
+Change Size 82;
+Change Ratio 10;
+Text '>VALUE' SR0 (-213 -367);
+
+Edit 'LF33ABDT-TR.sym';
+Layer 94;
+Pin 'INPUT' In None Middle R0 Both 0 (-700 0);
+Pin 'OUT' Out None Middle R180 Both 0 (700 0);
+Pin 'GND' Pas None Middle R90 Both 0 (0 -400);
+Wire 16 (-500 200) (-500 -200);
+Wire 16 (-500 -200) (500 -200);
+Wire 16 (500 -200) (500 200);
+Wire 16 (500 200) (-500 200);
+Layer 97;
+Layer 95;
+Change Size 82;
+Change Ratio 10;
+Text '>NAME' SR0 (-180 290);
+Layer 96;
+Change Size 82;
+Change Ratio 10;
+Text '>VALUE' SR0 (-238 -598);
+
+Edit 'LF33ABDT-TR.dev';
+Prefix 'U';
+
+Value Off;
+Add LF33ABDT-TR 'A' Next  0 (0 0);
+Package 'TO228P972X240-3N';
+Technology '';
+Attribute MPN 'LF33ABDT-TR';
+Attribute OC_FARNELL '2253503';
+Attribute OC_NEWARK '26M0226';
+Attribute Package 'DPAK';
+Attribute Supplier 'STMicroelectronics';
+Description 'LDO, 0.45VDO, 1A, 3.3V, 1%, 3TO252';
+Connect 'A.INPUT' '1';
+Connect 'A.GND' '2';
+Connect 'A.OUT' '3';
