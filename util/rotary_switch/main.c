@@ -9,13 +9,13 @@ static inline unsigned int pow2(unsigned int x)
 
 int main(int ac, char** av)
 {
-#define N_SWITCH 7 /* switch position count */
+#define N_SWITCH 12 /* switch position count */
 #define N_ADC 10 /* adc bits count */
 #define V_REF 3.3
 
   const double adc_hi = (double)pow2(N_ADC);
-  const double adc_step = adc_hi / (double)N_SWITCH;
-  const double rdiv_2 = 1000;
+  const double adc_step = adc_hi / (double)(N_SWITCH - 1);
+  const double rdiv_2 = 10000;
 
   double ri[N_SWITCH];
 
