@@ -1264,49 +1264,6 @@ Metric Code Size 3216</description>
 </package>
 </packages>
 </library>
-<library name="switch">
-<description>&lt;b&gt;Switches&lt;/b&gt;&lt;p&gt;
-Marquardt, Siemens, C&amp;K, ITT, and others&lt;p&gt;
-&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
-<packages>
-<package name="50-1POLE30">
-<description>&lt;b&gt;SERIES 50&lt;/b&gt; Single-Deck Rotary Switches one pole 30°&lt;p&gt;
-Source: www.grayhill.com .. J-15-21.pdf</description>
-<wire x1="-3.975" y1="4.825" x2="-2.725" y2="5.625" width="0.2032" layer="21" curve="-13.642305"/>
-<wire x1="-5.8549" y1="2.191" x2="-5.1724" y2="3.5088" width="0.2032" layer="21" curve="-13.641947"/>
-<wire x1="-6.166" y1="-1.0299" x2="-6.2338" y2="0.4525" width="0.2032" layer="21" curve="-13.641284"/>
-<wire x1="-4.825" y1="-3.975" x2="-5.625" y2="-2.725" width="0.2032" layer="21" curve="-13.642305"/>
-<wire x1="-2.191" y1="-5.8549" x2="-3.5088" y2="-5.1724" width="0.2032" layer="21" curve="-13.641947"/>
-<wire x1="1.0299" y1="-6.166" x2="-0.4525" y2="-6.2338" width="0.2032" layer="21" curve="-13.642593"/>
-<wire x1="3.975" y1="-4.825" x2="2.725" y2="-5.625" width="0.2032" layer="21" curve="-13.642305"/>
-<wire x1="5.8549" y1="-2.191" x2="5.1724" y2="-3.5088" width="0.2032" layer="21" curve="-13.641947"/>
-<wire x1="6.166" y1="1.0299" x2="6.2338" y2="-0.4525" width="0.2032" layer="21" curve="-13.641284"/>
-<wire x1="4.825" y1="3.975" x2="5.625" y2="2.725" width="0.2032" layer="21" curve="-13.642305"/>
-<wire x1="2.191" y1="5.8549" x2="3.5088" y2="5.1724" width="0.2032" layer="21" curve="-13.641947"/>
-<wire x1="-1.0299" y1="6.166" x2="0.4525" y2="6.2338" width="0.2032" layer="21" curve="-13.642593"/>
-<wire x1="-0.9142" y1="-1.1267" x2="-0.3749" y2="1.3799" width="0.2032" layer="51"/>
-<wire x1="-0.9142" y1="-1.1267" x2="-0.7549" y2="-0.3951" width="0.2032" layer="21"/>
-<wire x1="-0.5342" y1="0.6483" x2="-0.3749" y2="1.3799" width="0.2032" layer="21"/>
-<circle x="0" y="0" radius="6.25" width="0.2032" layer="51"/>
-<circle x="0" y="0" radius="1.5" width="0.2032" layer="21"/>
-<pad name="1" x="6.2065" y="-1.3419" drill="0.7" diameter="1.2" rot="R347.8"/>
-<pad name="2" x="4.7041" y="-4.2654" drill="0.7" diameter="1.2" rot="R317.8"/>
-<pad name="3" x="1.9411" y="-6.046" drill="0.7" diameter="1.2" rot="R287.8"/>
-<pad name="4" x="-1.3419" y="-6.2065" drill="0.7" diameter="1.2" rot="R257.8"/>
-<pad name="5" x="-4.2654" y="-4.7041" drill="0.7" diameter="1.2" rot="R227.8"/>
-<pad name="6" x="-6.046" y="-1.9411" drill="0.7" diameter="1.2" rot="R197.8"/>
-<pad name="7" x="-6.2065" y="1.3419" drill="0.7" diameter="1.2" rot="R167.8"/>
-<pad name="8" x="-4.7041" y="4.2654" drill="0.7" diameter="1.2" rot="R137.8"/>
-<pad name="9" x="-1.9411" y="6.046" drill="0.7" diameter="1.2" rot="R107.8"/>
-<pad name="10" x="1.3419" y="6.2065" drill="0.7" diameter="1.2" rot="R77.8"/>
-<pad name="11" x="4.2654" y="4.7041" drill="0.7" diameter="1.2" rot="R47.8"/>
-<pad name="12" x="6.046" y="1.9411" drill="0.7" diameter="1.2" rot="R17.8"/>
-<pad name="C" x="0" y="0" drill="0.7" diameter="1.2"/>
-<text x="-3.81" y="7.62" size="1.27" layer="25">&gt;NAME</text>
-<text x="-3.81" y="-8.89" size="1.27" layer="27">&gt;VALUE</text>
-</package>
-</packages>
-</library>
 <library name="resistor">
 <description>&lt;b&gt;Resistors, Capacitors, Inductors&lt;/b&gt;&lt;p&gt;
 Based on the previous libraries:
@@ -2494,7 +2451,7 @@ distributor RS 193-9117</description>
 <class number="0" name="default" width="0" drill="0">
 </class>
 </classes>
-<designrules name="default">
+<designrules name="SeeedStudio_DRU_no_angle_2layer">
 <description language="de">&lt;b&gt;EAGLE Design Rules&lt;/b&gt;
 &lt;p&gt;
 Die Standard-Design-Rules sind so gewählt, dass sie für 
@@ -2509,26 +2466,28 @@ a wide range of applications. Your particular design
 may have different requirements, so please make the
 necessary adjustments and save your customized
 design rules under a new name.</description>
+<description language="zh">&lt;b&gt;Seeed Studio EAGLE Design Rules&lt;/b&gt;
+</description>
 <param name="layerSetup" value="(1*16)"/>
-<param name="mtCopper" value="0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm"/>
-<param name="mtIsolate" value="1.5mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm"/>
-<param name="mdWireWire" value="8mil"/>
-<param name="mdWirePad" value="8mil"/>
-<param name="mdWireVia" value="8mil"/>
-<param name="mdPadPad" value="8mil"/>
-<param name="mdPadVia" value="8mil"/>
-<param name="mdViaVia" value="8mil"/>
-<param name="mdSmdPad" value="8mil"/>
-<param name="mdSmdVia" value="8mil"/>
-<param name="mdSmdSmd" value="8mil"/>
+<param name="mtCopper" value="0.035mm 0.0175mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.0175mm 0.035mm"/>
+<param name="mtIsolate" value="1.5mm 1.1mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm"/>
+<param name="mdWireWire" value="6mil"/>
+<param name="mdWirePad" value="6mil"/>
+<param name="mdWireVia" value="6mil"/>
+<param name="mdPadPad" value="6mil"/>
+<param name="mdPadVia" value="6mil"/>
+<param name="mdViaVia" value="6mil"/>
+<param name="mdSmdPad" value="0mil"/>
+<param name="mdSmdVia" value="0mil"/>
+<param name="mdSmdSmd" value="0mil"/>
 <param name="mdViaViaSameLayer" value="8mil"/>
 <param name="mnLayersViaInSmd" value="2"/>
-<param name="mdCopperDimension" value="40mil"/>
-<param name="mdDrill" value="8mil"/>
+<param name="mdCopperDimension" value="10mil"/>
+<param name="mdDrill" value="10mil"/>
 <param name="mdSmdStop" value="0mil"/>
-<param name="msWidth" value="10mil"/>
-<param name="msDrill" value="24mil"/>
-<param name="msMicroVia" value="9.99mm"/>
+<param name="msWidth" value="6mil"/>
+<param name="msDrill" value="12mil"/>
+<param name="msMicroVia" value="12mil"/>
 <param name="msBlindViaRatio" value="0.5"/>
 <param name="rvPadTop" value="0.25"/>
 <param name="rvPadInner" value="0.25"/>
@@ -2543,9 +2502,9 @@ design rules under a new name.</description>
 <param name="rlMaxPadInner" value="20mil"/>
 <param name="rlMinPadBottom" value="10mil"/>
 <param name="rlMaxPadBottom" value="20mil"/>
-<param name="rlMinViaOuter" value="8mil"/>
+<param name="rlMinViaOuter" value="6mil"/>
 <param name="rlMaxViaOuter" value="20mil"/>
-<param name="rlMinViaInner" value="8mil"/>
+<param name="rlMinViaInner" value="6mil"/>
 <param name="rlMaxViaInner" value="20mil"/>
 <param name="rlMinMicroViaOuter" value="4mil"/>
 <param name="rlMaxMicroViaOuter" value="20mil"/>
@@ -2553,16 +2512,16 @@ design rules under a new name.</description>
 <param name="rlMaxMicroViaInner" value="20mil"/>
 <param name="psTop" value="-1"/>
 <param name="psBottom" value="-1"/>
-<param name="psFirst" value="-1"/>
+<param name="psFirst" value="0"/>
 <param name="psElongationLong" value="100"/>
 <param name="psElongationOffset" value="100"/>
 <param name="mvStopFrame" value="1"/>
 <param name="mvCreamFrame" value="0"/>
-<param name="mlMinStopFrame" value="4mil"/>
-<param name="mlMaxStopFrame" value="4mil"/>
+<param name="mlMinStopFrame" value="2mil"/>
+<param name="mlMaxStopFrame" value="2mil"/>
 <param name="mlMinCreamFrame" value="0mil"/>
 <param name="mlMaxCreamFrame" value="0mil"/>
-<param name="mlViaStopLimit" value="0mil"/>
+<param name="mlViaStopLimit" value="25mil"/>
 <param name="srRoundness" value="0"/>
 <param name="srMinRoundness" value="0mil"/>
 <param name="srMaxRoundness" value="0mil"/>
@@ -2573,7 +2532,7 @@ design rules under a new name.</description>
 <param name="checkGrid" value="0"/>
 <param name="checkAngle" value="0"/>
 <param name="checkFont" value="1"/>
-<param name="checkRestrict" value="1"/>
+<param name="checkRestrict" value="0"/>
 <param name="useDiameter" value="13"/>
 <param name="maxErrors" value="50"/>
 </designrules>
@@ -2705,9 +2664,7 @@ design rules under a new name.</description>
 <element name="R24" library="resistor" package="R1206" value="10K" x="24.13" y="36.83" rot="MR270"/>
 <element name="R25" library="resistor" package="R1206" value="330" x="21.59" y="25.4" rot="R180"/>
 <element name="R26" library="resistor" package="R1206" value="330" x="21.59" y="22.86" rot="R180"/>
-<element name="SW_POS" library="switch" package="50-1POLE30" value="50-1POLE30" x="39.37" y="59.69"/>
 <element name="CON_MODE" library="pinhdr_13" package="PINHDR_13" value="PINHDR_13" x="39.37" y="41.91" rot="R270"/>
-<element name="SW_MODE" library="switch" package="50-1POLE30" value="50-1POLE30" x="11.43" y="59.69"/>
 <element name="CON_POS" library="pinhdr_13" package="PINHDR_13" value="PINHDR_13" x="11.43" y="35.56" rot="R270"/>
 <element name="CON_ANT" library="con-coax" package="BU-SMA-G" value="BU-SMA-G" x="25.4" y="44.45" rot="R90">
 <attribute name="OC_NEWARK" value="unknown" x="25.4" y="44.45" size="1.778" layer="27" rot="R90" display="off"/>

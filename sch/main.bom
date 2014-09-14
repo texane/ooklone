@@ -22,6 +22,12 @@ x
 x
 none
 
+1.27mm male connection headers
+http://fr.farnell.com/samtec/ftr-113-02-s-s-p-tr/conn-header-1-27-x-2-54mm-cms-1x13/dp/2415724
+2
+x
+can be bought only in 125 qtity
+
 squared male headers
 x
 1
@@ -46,16 +52,16 @@ http://fr.farnell.com/panasonic/eee1ca470sp/condensateur-boitier-d-47uf-16v/dp/9
 1.81
 none
 
-sma antenna
-x
+sma 434Mhz antenna
+http://fr.farnell.com/rf-solutions/ant-4hel2-sma/ant-433mhz-helical-sma-2dbi/dp/2305893
 1
-x
+4.98
 none
 
 sma connector
-x
+http://fr.farnell.com/te-connectivity-amp/5-1814400-1/embase-femelle-sma-angle-droit/dp/1248989
 1
-x
+2.29
 none
 
 3 LR03 battery holder
