@@ -13373,6 +13373,52 @@ distributor RS 193-9117</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="frames">
+<description>&lt;b&gt;Frames for Sheet and Layout&lt;/b&gt;</description>
+<packages>
+</packages>
+<symbols>
+<symbol name="A4L-LOC">
+<wire x1="256.54" y1="3.81" x2="256.54" y2="8.89" width="0.1016" layer="94"/>
+<wire x1="256.54" y1="8.89" x2="256.54" y2="13.97" width="0.1016" layer="94"/>
+<wire x1="256.54" y1="13.97" x2="256.54" y2="19.05" width="0.1016" layer="94"/>
+<wire x1="256.54" y1="19.05" x2="256.54" y2="24.13" width="0.1016" layer="94"/>
+<wire x1="161.29" y1="3.81" x2="161.29" y2="24.13" width="0.1016" layer="94"/>
+<wire x1="161.29" y1="24.13" x2="215.265" y2="24.13" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="24.13" x2="256.54" y2="24.13" width="0.1016" layer="94"/>
+<wire x1="246.38" y1="3.81" x2="246.38" y2="8.89" width="0.1016" layer="94"/>
+<wire x1="246.38" y1="8.89" x2="256.54" y2="8.89" width="0.1016" layer="94"/>
+<wire x1="246.38" y1="8.89" x2="215.265" y2="8.89" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="8.89" x2="215.265" y2="3.81" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="8.89" x2="215.265" y2="13.97" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="13.97" x2="256.54" y2="13.97" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="13.97" x2="215.265" y2="19.05" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="19.05" x2="256.54" y2="19.05" width="0.1016" layer="94"/>
+<wire x1="215.265" y1="19.05" x2="215.265" y2="24.13" width="0.1016" layer="94"/>
+<text x="217.17" y="15.24" size="2.54" layer="94" font="vector">&gt;DRAWING_NAME</text>
+<text x="217.17" y="10.16" size="2.286" layer="94" font="vector">&gt;LAST_DATE_TIME</text>
+<text x="230.505" y="5.08" size="2.54" layer="94" font="vector">&gt;SHEET</text>
+<text x="216.916" y="4.953" size="2.54" layer="94" font="vector">Sheet:</text>
+<frame x1="0" y1="0" x2="260.35" y2="179.07" columns="6" rows="4" layer="94"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="A4L-LOC" prefix="FRAME" uservalue="yes">
+<description>&lt;b&gt;FRAME&lt;/b&gt;&lt;p&gt;
+DIN A4, landscape with location and doc. field</description>
+<gates>
+<gate name="G$1" symbol="A4L-LOC" x="0" y="0"/>
+</gates>
+<devices>
+<device name="">
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -13420,6 +13466,7 @@ distributor RS 193-9117</description>
 <part name="CON_MODE" library="pinhdr_13" deviceset="PINHDR_13" device=""/>
 <part name="CON_POS" library="pinhdr_13" deviceset="PINHDR_13" device=""/>
 <part name="CON_ANT" library="con-coax" deviceset="BU-SMA-G" device=""/>
+<part name="FRAME1" library="frames" deviceset="A4L-LOC" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -13428,6 +13475,9 @@ distributor RS 193-9117</description>
 <text x="-43.18" y="7.62" size="1.778" layer="97">connect to led+</text>
 <text x="-15.24" y="-43.18" size="1.778" layer="97">connect to common</text>
 <text x="78.74" y="-43.18" size="1.778" layer="97">connect to common</text>
+<text x="53.34" y="-63.5" size="1.778" layer="94" font="vector">ooklone_v000</text>
+<text x="53.34" y="-68.58" size="1.778" layer="94" font="vector">https://github.com/texane/ooklone</text>
+<text x="53.34" y="-73.66" size="1.778" layer="94" font="vector">texane@gmail.com</text>
 </plain>
 <instances>
 <instance part="U$1" gate="G$1" x="0" y="0"/>
@@ -13467,6 +13517,11 @@ distributor RS 193-9117</description>
 <instance part="CON_MODE" gate="G$1" x="-20.32" y="-27.94"/>
 <instance part="CON_POS" gate="G$1" x="73.66" y="-27.94"/>
 <instance part="CON_ANT" gate="G1" x="-53.34" y="50.8"/>
+<instance part="FRAME1" gate="G$1" x="-111.76" y="-83.82" smashed="yes">
+<attribute name="DRAWING_NAME" x="105.41" y="-68.58" size="2.54" layer="94" font="vector"/>
+<attribute name="LAST_DATE_TIME" x="105.41" y="-73.66" size="2.286" layer="94" font="vector"/>
+<attribute name="SHEET" x="118.745" y="-78.74" size="2.54" layer="94" font="vector"/>
+</instance>
 </instances>
 <busses>
 </busses>
