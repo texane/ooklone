@@ -63,6 +63,7 @@
 <hole x="48.26" y="46.99" drill="2.8"/>
 <hole x="2.54" y="46.99" drill="2.8"/>
 <hole x="2.54" y="2.54" drill="2.8"/>
+<text x="6.35" y="17.78" size="0.8128" layer="25">ooklone_v0000</text>
 </plain>
 <libraries>
 <library name="moteino_usb_r4">
