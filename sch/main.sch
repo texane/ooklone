@@ -13426,6 +13426,8 @@ distributor RS 193-9117</description>
 <plain>
 <text x="-43.18" y="10.16" size="1.778" layer="97">connect to led+</text>
 <text x="-43.18" y="7.62" size="1.778" layer="97">connect to led+</text>
+<text x="-15.24" y="-43.18" size="1.778" layer="97">connect to common</text>
+<text x="78.74" y="-43.18" size="1.778" layer="97">connect to common</text>
 </plain>
 <instances>
 <instance part="U$1" gate="G$1" x="0" y="0"/>
