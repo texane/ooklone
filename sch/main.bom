@@ -34,12 +34,6 @@ x
 x
 none
 
-BA033CC0FP 3.3v ldo regulator
-http://fr.farnell.com/rohm/ba033cc0fp-e2/ldo-fixed-3-3v-1a-to-252-3/dp/2342854
-1
-1.82
-optional, only if moteino onboard ldo not used
-
 100nF capacitor
 http://fr.farnell.com/avx/12061c104jat2a/condens-ceramique-0-1uf-100v-x7r/dp/2332842
 2 (10)
@@ -88,16 +82,22 @@ http://fr.farnell.com/grayhill/56sd30-01-1-ajn/commutateur-1pole-12-pos/dp/11903
 30.06
 none
 
-on off switch
+rotary switch cap
 x
 1
 x
 none
 
-start stop button
-x
+on off switch
+http://fr.farnell.com/knitter-switch/mfs106d/slide-switch-spdt/dp/807539
 1
-x
+2.3
+none
+
+start stop button
+http://fr.farnell.com/jsp/search/productdetail.jsp?SKU=1634683
+5 (1)
+2.695
 none
 
 red leds
@@ -184,10 +184,10 @@ http://fr.farnell.com/vishay-draloric/crcw12062m00fkea/resistance-1206-2mr-1/dp/
 1.450
 none
 
-colonette m2.5
-x
-2
-x
+M2.5 autodrilling screws
+http://fr.farnell.com/nettlefolds/4511025008137fa/vis-taptite-tete-cyl-m2-5x8-pq100/dp/574363
+100 (3)
+7.54
 none
 
 ecrou m2.5
