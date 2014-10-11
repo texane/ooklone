@@ -13475,7 +13475,7 @@ DIN A4, landscape with location and doc. field</description>
 <text x="-43.18" y="7.62" size="1.778" layer="97">connect to led+</text>
 <text x="-15.24" y="-43.18" size="1.778" layer="97">connect to common</text>
 <text x="78.74" y="-43.18" size="1.778" layer="97">connect to common</text>
-<text x="53.34" y="-63.5" size="1.778" layer="94" font="vector">ooklone_v000</text>
+<text x="53.34" y="-63.5" size="1.778" layer="94" font="vector">ooklone_v001</text>
 <text x="53.34" y="-68.58" size="1.778" layer="94" font="vector">https://github.com/texane/ooklone</text>
 <text x="53.34" y="-73.66" size="1.778" layer="94" font="vector">texane@gmail.com</text>
 </plain>
