@@ -132,7 +132,7 @@ static volatile uint8_t pulse_flags;
 /* by the timer prescaler value and impacts the maximum timer value */
 /* that can be stored in 8 bits (PULSE_MAX_TIMER). we want to stay */
 /* on 8 bits to have a maximum buffer size. */
-#define PULSE_TIMER_RES_US 16
+#define PULSE_TIMER_RES_US 32
 
 #define pulse_us_to_timer(__us) (1 + (__us) / PULSE_TIMER_RES_US)
 #define pulse_timer_to_us(__x) (((uint16_t)__x) * PULSE_TIMER_RES_US)
@@ -172,6 +172,8 @@ static void pcint2_vect(void)
   TCCR1B = (1 << 3) | (3 << 0);
 #elif (PULSE_TIMER_RES_US == 16)
   TCCR1B = (1 << 3) | (4 << 0);
+#elif (PULSE_TIMER_RES_US == 32)
+  TCCR1B = (1 << 3) | (5 << 0);
 #endif
 
   /* store counter */
@@ -404,6 +406,8 @@ static void delay_eof_timer(uint8_t x)
   static const uint16_t prescal = 64;
 #elif (PULSE_TIMER_RES_US == 16)
   static const uint16_t prescal = 256;
+#elif (PULSE_TIMER_RES_US == 32)
+  static const uint16_t prescal = 512;
 #endif
 
   _delay_loop_2((uint16_t)x * prescal);
@@ -436,6 +440,8 @@ static void do_replay(void)
   TCCR1B = 3 << 0;
 #elif (PULSE_TIMER_RES_US == 16)
   TCCR1B = 4 << 0;
+#elif (PULSE_TIMER_RES_US == 32)
+  TCCR1B = 5 << 0;
 #endif
 
   while ((pulse_flags & PULSE_FLAG_DONE) == 0)
